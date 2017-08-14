@@ -1,12 +1,15 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import re
+import logging
 import lxml.etree as etree
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from suds.wsse import *
 import json
 import sys
+
+logging.getLogger('suds.client').setLevel(logging.CRITICAL)
 
 if sys.version_info[:2] <= (2, 7):
     reload(sys)
@@ -77,6 +80,7 @@ class CMDBuild:
                       order_type=None, limit=None, offset=None, full_text_query=None, cql_query=None,
                       cql_query_parameters=None):
         attribute_list = []
+        result = None
         try:
             query = self.client.factory.create('ns0:query')
             if attributes_list:
@@ -128,11 +132,38 @@ class CMDBuild:
         if metadata:
             cardType.metadata = metadata
 
-        result = self.client.service.createCard(cardType)
-        return self.decode(result)
+        result = None
+        try:
+            result = self.client.service.createCard(cardType)
+        except:
+            for k, v in attributes_list.items():
+                filter = {'name':k, 'operator':'EQUALS', 'value':v}
+            print('Don\'t create card classname: ' + classname + ',  maybe exists')
+            print('Filter: {{"name":{name}, "operator":{operator}, "value":{value}}}'.format(**filter))
+            result = self.get_card_list(classname, _filter=filter)
+        if isinstance(result, dict):
+            return result
+        else:
+            return self.decode(result)
 
-    def update_card(self):
-        result = self.client.service.updateCard()
+    def update_card(self, classname, id, attributes_list, metadata=None, beginDate=None):
+        cardType = self.client.factory.create('ns0:card')
+        cardType.className = classname
+        cardType.id = id
+        cardType.beginDate = beginDate
+        if attributes_list:
+            attribute_list = []
+            attribute = self.client.factory.create('ns0:attributeList')
+            for k, v in attributes_list.items():
+                attribute.name = k
+                attribute.value = v
+            attribute_list.append(attribute)
+            cardType.attributeList = attribute_list
+
+        if metadata:
+            cardType.metadata = metadata
+
+        result = self.client.service.updateCard(cardType)
         return self.decode(result)
 
     def create_lookup(self,):
@@ -236,26 +267,32 @@ class CMDBuild:
         )
 
         try:
-            cards = cards['cards']
-            for card in cards:
-                id = card['id']
-                outtab['Id'][id] = {}
-                attributes = card['attributeList']
-                for j, attribute in enumerate(attributes):
-                    if isinstance(attribute, dict):
-                        code = None
-                        if len(attribute) > 2:
-                            code = attribute['code'] or ""
-                        key = attribute['name']
-                        value = attribute['value'] or ""
-                        if key:
-                            if not code and value:
-                                outtab['Id'][id][key] = value
-                            else:
-                                if value:
-                                    outtab['Id'][id][key] = {
-                                        "value": value, "code": code
-                                    }
+            if isinstance(cards, int):
+                outtab['Id'] = cards
+            else:
+                if cards['cards']:
+                    cards = cards['cards']
+                else:
+                    cards = cards['card']
+                for card in cards:
+                    id = card['id']
+                    outtab['Id'][id] = {}
+                    attributes = card['attributeList']
+                    for j, attribute in enumerate(attributes):
+                        if isinstance(attribute, dict):
+                            code = None
+                            if len(attribute) > 2:
+                                code = attribute['code'] or ""
+                            key = attribute['name']
+                            value = attribute['value'] or ""
+                            if key:
+                                if not code and value:
+                                    outtab['Id'][id][key] = value
+                                else:
+                                    if value:
+                                        outtab['Id'][id][key] = {
+                                            "value": value, "code": code
+                                        }
         except:
             id = cards['id']
             outtab['Id'][id] = {}
@@ -282,12 +319,19 @@ if __name__ == '__main__':
     cmdbuild = CMDBuild('admin', '3$rFvCdE', '10.244.244.128')
     cmdbuild.auth()
 
-    response = cmdbuild.get_card_list('Hosts')
-    for hostid, v in response['Id'].items():
+    #response = cmdbuild.get_card_list('Hosts')
+    #print(json.dumps(response, indent=2))  # Z2C format response
+    """ for hostid, v in response['Id'].items():
         if isinstance(hostid, int):
             filter = {'name':'hostid','operator':'EQUALS','value':hostid} # added filter
             v['zItems'] = cmdbuild.get_card_list('zItems', _filter=filter) # get zItems card
             v['zTriggers'] = cmdbuild.get_card_list('ztriggers', _filter=filter) # get ztriggers card
             v['zApplications'] = cmdbuild.get_card_list('zapplications', _filter=filter) # get zapplications card
 
-    print(json.dumps(response, indent=2))  # Z2C format response
+    """
+    response = cmdbuild.create_card('AddressesIPv4',{'Address':'192.168.88.37/24'})
+    for id, v in response['Id'].items():
+        response = cmdbuild.get_card_history('AddressesIPv4', id)
+        #response = cmdbuild.update_card('AddressesIPv4', id, {'Address':'192.168.88.38/24'})
+        #response = cmdbuild.delete_card('AddressesIPv4', id)
+        print(json.dumps(response, indent=2))  # Z2C format response
