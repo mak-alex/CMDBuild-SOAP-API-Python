@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import re
 import json
-import suds
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from suds.wsse import *
@@ -66,8 +65,9 @@ class CMDBuild:
         self.ip = ip
         self.url = 'http://{}/cmdbuild/services/soap/Webservices?wsdl'.format(self.ip)
         self.client = None
+        self.auth(self.username, self.password)
 
-    def set_credentials(self, username=None, password=None):
+    def auth(self, username=None, password=None):
         if not self.username and not self.password:
             if username and password:
                 self.username = username
@@ -75,8 +75,6 @@ class CMDBuild:
             else:
                 print('`username\' and/or `password\' can\'t be empty')
                 sys.exit(-1)
-
-    def auth(self):
         try:
             self.client = Client(self.url, plugins=[NamespaceAndResponseCorrectionPlugin()])
         except Exception as e:
@@ -99,7 +97,8 @@ class CMDBuild:
             security.tokens.append(token)
         except:
             print(
-            'Failed to create or add a token, args: username={0}, password={1}'.format(self.username, self.password))
+                'Failed to create or add a token, args: username={0}, password={1}'.format(self.username,
+                                                                                           self.password))
             sys.exit(-1)
         self.client.set_options(wsse=security)
 
@@ -215,7 +214,8 @@ class CMDBuild:
             result = self.client.service.createCard(cardType)
             if result:
                 print(
-                'Card classname: \'{0}\', id: \'{1}\' with: {2} - created'.format(classname, result, attribute_list))
+                    'Card classname: \'{0}\', id: \'{1}\' with: {2} - created'.format(classname, result,
+                                                                                      attribute_list))
         except:
             for k, v in attributes_list.items():
                 filter = {'name': k, 'operator': 'EQUALS', 'value': v}
@@ -256,8 +256,8 @@ class CMDBuild:
             result = self.client.service.updateCard(cardType)
             if result:
                 print(
-                'Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - updated'.format(classname, card_id,
-                                                                                                 attribute_list))
+                    'Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - updated'.format(classname, card_id,
+                                                                                                     attribute_list))
         except:
             print('Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - can\'t be updated'.format(classname,
                                                                                                              card_id,
