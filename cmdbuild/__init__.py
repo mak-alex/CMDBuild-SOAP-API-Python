@@ -265,24 +265,54 @@ class CMDBuild:
             sys.exit()
         return decode(result)
 
-    def create_lookup(self, ):
-        result = self.client.service.createLookup()
+    def create_lookup(self, lookup_type, code, description, lookup_id=None, notes=None, parent_id=None, position=None):
+        lookup = self.client.factory.create('ns0:lookup')
+        lookup.code = code
+        lookup.description = description
+        if lookup_id:
+            lookup.id = lookup_id
+        if notes:
+            lookup.notes = notes
+        if parent_id and position:
+            lookup.parentId = parent_id
+            lookup.position = position
+        lookup.type = lookup_type
+        try:
+            result = self.client.service.createLookup(lookup)
+        except:
+            sys.exit()
+
         return decode(result)
 
     def delete_lookup(self, lookup_id):
         result = self.client.service.deleteLookup(lookupId=lookup_id)
         return decode(result)
 
-    def update_lookup(self):
-        result = self.client.service.updateLookup()
+    def update_lookup(self, lookup_type, code, description, lookup_id=None, notes=None, parent_id=None, position=None):
+        lookup = self.client.factory.create('ns0:lookup')
+        lookup.code = code
+        lookup.description = description
+        if lookup_id:
+            lookup.id = lookup_id
+        if notes:
+            lookup.notes = notes
+        if parent_id and position:
+            lookup.parentId = parent_id
+            lookup.position = position
+        lookup.type = lookup_type
+        try:
+            result = self.client.service.updateLookup(lookup)
+        except:
+            sys.exit()
+
         return decode(result)
 
-    def get_lookup_list(self):
-        result = self.client.service.getLookupList()
+    def get_lookup_list(self, lookup_type, value, parent_list):
+        result = self.client.service.getLookupList(lookup_type, value, parent_list)
         return decode(result)
 
-    def get_lookup_by_id(self):
-        result = self.client.service.getLookupById()
+    def get_lookup_by_id(self, lookup_id):
+        result = self.client.service.getLookupById(lookup_id)
         return decode(result)
 
     def create_relation(self):
