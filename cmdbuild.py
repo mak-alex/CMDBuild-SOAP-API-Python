@@ -331,7 +331,7 @@ if __name__ == '__main__':
     """
     response = cmdbuild.create_card('AddressesIPv4',{'Address':'192.168.88.37/24'})
     for id, v in response['Id'].items():
-        response = cmdbuild.get_card_history('AddressesIPv4', id)
+        #response = cmdbuild.get_card_history('AddressesIPv4', i, idd)
         #response = cmdbuild.update_card('AddressesIPv4', id, {'Address':'192.168.88.38/24'})
-        #response = cmdbuild.delete_card('AddressesIPv4', id)
+        response = cmdbuild.delete_card('AddressesIPv4', id)
         print(json.dumps(response, indent=2))  # Z2C format response
