@@ -9,8 +9,6 @@ from suds.wsse import *
 import json
 import sys
 
-logging.getLogger('suds.client').setLevel(logging.CRITICAL)
-
 if sys.version_info[:2] <= (2, 7):
     reload(sys)
     sys.setdefaultencoding('utf-8')
@@ -45,6 +43,9 @@ class CMDBuild:
         self.password = password
         self.url = 'http://' + ip + '/cmdbuild/services/soap/Webservices?wsdl'
         self.client = None
+        format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s'
+        logging.basicConfig(format=format, level=logging.CRITICAL)
+        self.logger = logging.getLogger('CMDBuildAPI')
 
     def set_credentials(self, username, password):
         if not self.username:
@@ -54,6 +55,7 @@ class CMDBuild:
             self.password = password
 
     def auth(self):
+        self.logger.info('dsdsds')
         self.client = Client(self.url, plugins=[NamespaceAndResponseCorrectionPlugin()])
         security = Security()
         token = UsernameToken(self.username, self.password)
@@ -81,36 +83,41 @@ class CMDBuild:
                       cql_query_parameters=None):
         attribute_list = []
         result = None
+        query = self.client.factory.create('ns0:query')
+        if attributes_list:
+            attribute = self.client.factory.create('ns0:attribute')
+            for i, item in enumerate(attributes_list):
+                attribute.name = attributes_list[i]
+            attribute_list.append(attribute)
+
+        if _filter or filter_sq_operator:
+            if _filter and not filter_sq_operator:
+                query.filter = _filter
+
+        if order_type:
+            query.orderType = order_type
+
+        if limit:
+            query.limit = limit
+
+        if offset:
+            query.offset = offset
+
+        if full_text_query:
+            query.fullTextQuery = full_text_query
+
+        if cql_query:
+            query.cqlQuery.parameters = cql_query_parameters
+
         try:
-            query = self.client.factory.create('ns0:query')
-            if attributes_list:
-                attribute = self.client.factory.create('ns0:attribute')
-                for i, item in enumerate(attributes_list):
-                    attribute.name = attributes_list[i]
-                attribute_list.append(attribute)
-
-            if _filter or filter_sq_operator:
-                if _filter and not filter_sq_operator:
-                    query.filter = _filter
-
-            if order_type:
-                query.orderType = order_type
-
-            if limit:
-                query.limit = limit
-
-            if offset:
-                query.offset = offset
-
-            if full_text_query:
-                query.fullTextQuery = full_text_query
-
-            if cql_query:
-                query.cqlQuery.parameters = cql_query_parameters
-
             result = self.client.service.getCardList(className=classname, attributeList=attribute_list, queryType=query)
+            if not result[0]:
+                print('Failed to get cards for classname: {0}, total rows: {1}'.format(classname, result[0]))
+                sys.exit()
         except:
+            self.logger.warning('Failed to get cards for classname: %s', classname)
             sys.exit()
+
         return self.decode(result)
 
     def delete_card(self, classname, card_id):
@@ -319,8 +326,9 @@ if __name__ == '__main__':
     cmdbuild = CMDBuild('admin', '3$rFvCdE', '10.244.244.128')
     cmdbuild.auth()
 
-    #response = cmdbuild.get_card_list('Hosts')
-    #print(json.dumps(response, indent=2))  # Z2C format response
+    response = cmdbuild.get_card_list('Hosts')
+    if response:
+        print(json.dumps(response, indent=2))  # Z2C format response
     """ for hostid, v in response['Id'].items():
         if isinstance(hostid, int):
             filter = {'name':'hostid','operator':'EQUALS','value':hostid} # added filter
@@ -329,9 +337,10 @@ if __name__ == '__main__':
             v['zApplications'] = cmdbuild.get_card_list('zapplications', _filter=filter) # get zapplications card
 
     """
-    response = cmdbuild.create_card('AddressesIPv4',{'Address':'192.168.88.37/24'})
+    """response = cmdbuild.create_card('AddressesIPv4',{'Address':'192.168.88.37/24'})
     for id, v in response['Id'].items():
         #response = cmdbuild.get_card_history('AddressesIPv4', i, idd)
         #response = cmdbuild.update_card('AddressesIPv4', id, {'Address':'192.168.88.38/24'})
-        response = cmdbuild.delete_card('AddressesIPv4', id)
+        #response = cmdbuild.delete_card('AddressesIPv4', id)
         print(json.dumps(response, indent=2))  # Z2C format response
+    """
