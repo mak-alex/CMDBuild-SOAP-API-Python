@@ -65,7 +65,8 @@ class CMDBuild:
         self.ip = ip
         self.url = 'http://{}/cmdbuild/services/soap/Webservices?wsdl'.format(self.ip)
         self.client = None
-        self.auth(self.username, self.password)
+        if self.username and self.password:
+            self.auth(self.username, self.password)
 
     def auth(self, username=None, password=None):
         if not self.username and not self.password:
