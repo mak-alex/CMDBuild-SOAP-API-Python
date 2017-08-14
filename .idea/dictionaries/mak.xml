@@ -2,9 +2,12 @@
   <dictionary name="mak">
     <words>
       <w>cmdbuild</w>
+      <w>hostid</w>
       <w>keylist</w>
       <w>marshalled</w>
       <w>outtab</w>
+      <w>zapplications</w>
+      <w>ztriggers</w>
     </words>
   </dictionary>
 </component>

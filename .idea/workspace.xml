@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="f7057351-af16-4ad8-8972-dea0ebedcbf7" name="Default" comment="" />
+    <list default="true" id="f7057351-af16-4ad8-8972-dea0ebedcbf7" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/cmdbuild/__init__.py" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/cmdbuild.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/index.html" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/dictionaries/mak.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/mak.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -13,13 +20,13 @@
     <splitter split-orientation="horizontal" split-proportion="0.5">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="cmdbuild.py" pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/cmdbuild.py">
+          <file leaf-file-name="test.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/test.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="515">
-                  <caret line="286" column="0" lean-forward="false" selection-start-line="286" selection-start-column="0" selection-end-line="286" selection-end-column="0" />
+                <state relative-caret-position="378">
+                  <caret line="43" column="4" lean-forward="false" selection-start-line="43" selection-start-column="4" selection-end-line="43" selection-end-column="4" />
                   <folding>
-                    <element signature="e#47#56#0" expanded="true" />
+                    <element signature="e#26#37#0" expanded="true" />
                   </folding>
                 </state>
               </provider>
@@ -28,12 +35,12 @@
         </leaf>
       </split-first>
       <split-second>
-        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="cmdbuild.lua" pinned="false" current-in-tab="true">
-            <entry file="file://$PROJECT_DIR$/../../lua/cmdbuild_soap_api/lib/cmdbuild.lua">
+        <leaf>
+          <file leaf-file-name="__init__.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/cmdbuild/__init__.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1988">
-                  <caret line="775" column="14" lean-forward="false" selection-start-line="775" selection-start-column="14" selection-end-line="775" selection-end-column="14" />
+                <state relative-caret-position="56">
+                  <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -42,6 +49,9 @@
         </leaf>
       </split-second>
     </splitter>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GradleLocalSettings">
     <option name="externalProjectsViewState">
@@ -53,6 +63,8 @@
       <list>
         <option value="$PROJECT_DIR$/../../lua/cmdbuild/lib/Utils.lua" />
         <option value="$PROJECT_DIR$/cmdbuild.py" />
+        <option value="$PROJECT_DIR$/test.py" />
+        <option value="$PROJECT_DIR$/cmdbuild/__init__.py" />
       </list>
     </option>
   </component>
@@ -81,7 +93,7 @@
     </entry>
   </component>
   <component name="ProjectView">
-    <navigator proportions="" version="1">
+    <navigator currentView="ProjectPane" proportions="" version="1">
       <flattenPackages />
       <showMembers />
       <showModules />
@@ -94,10 +106,31 @@
       <manualOrder />
       <foldersAlwaysOnTop value="true" />
     </navigator>
-    <panes />
+    <panes>
+      <pane id="PackagesPane" />
+      <pane id="Scratches" />
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="cmdbuild" type="b2602c69:ProjectViewProjectNode" />
+              <item name="cmdbuild" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="cmdbuild" type="b2602c69:ProjectViewProjectNode" />
+              <item name="cmdbuild" type="462c0819:PsiDirectoryNode" />
+              <item name="cmdbuild" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="AndroidView" />
+    </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../lua/cmdbuild_soap_api/lib/cmdbuild.lua" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$2/Languages" value="Python" />
     <property name="project.structure.last.edited" value="Project" />
@@ -124,13 +157,13 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="/usr/bin/python2" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="cmdbuild" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/cmdbuild.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="true" />
@@ -261,8 +294,8 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.329429" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.329429" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -293,16 +326,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/cmdbuild.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4004">
-          <caret line="286" column="0" lean-forward="false" selection-start-line="286" selection-start-column="0" selection-end-line="286" selection-end-column="0" />
-          <folding>
-            <element signature="e#47#56#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../../lua/cmdbuild_soap_api/lib/cmdbuild.lua">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -311,46 +334,28 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmdbuild.py">
+    <entry file="file://$PROJECT_DIR$/cmdbuild.py" />
+    <entry file="file://$PROJECT_DIR$/../../lua/cmdbuild_soap_api/lib/cmdbuild.lua">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#47#56#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmdbuild.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="770">
-          <caret line="55" column="8" lean-forward="false" selection-start-line="55" selection-start-column="8" selection-end-line="55" selection-end-column="8" />
-          <folding>
-            <element signature="e#47#56#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/cmdbuild.py">
+    <entry file="file://$PROJECT_DIR$/cmdbuild.py" />
+    <entry file="file://$PROJECT_DIR$/../../lua/cmdbuild_soap_api/lib/cmdbuild.lua">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#47#56#0" expanded="true" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmdbuild.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#47#56#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/cmdbuild.py" />
+    <entry file="file://$PROJECT_DIR$/cmdbuild.py" />
+    <entry file="file://$PROJECT_DIR$/cmdbuild.py" />
+    <entry file="file://$PROJECT_DIR$/cmdbuild.py" />
     <entry file="file://$APPLICATION_CONFIG_DIR$/scratches/scratch.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -365,21 +370,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/cmdbuild.py" />
     <entry file="file://$PROJECT_DIR$/../../lua/cmdbuild_soap_api/lib/cmdbuild.lua">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1988">
+        <state relative-caret-position="14">
           <caret line="775" column="14" lean-forward="false" selection-start-line="775" selection-start-column="14" selection-end-line="775" selection-end-column="14" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmdbuild.py">
+    <entry file="file://$PROJECT_DIR$/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="515">
-          <caret line="286" column="0" lean-forward="false" selection-start-line="286" selection-start-column="0" selection-end-line="286" selection-end-column="0" />
+        <state relative-caret-position="378">
+          <caret line="43" column="4" lean-forward="false" selection-start-line="43" selection-start-column="4" selection-end-line="43" selection-end-column="4" />
           <folding>
-            <element signature="e#47#56#0" expanded="true" />
+            <element signature="e#26#37#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmdbuild/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="56">
+          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
