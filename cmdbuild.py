@@ -280,7 +280,12 @@ class CMDBuild:
 cmdbuild = CMDBuild('admin', '3$rFvCdE', '10.244.244.128')
 cmdbuild.auth()
 
-response = cmdbuild.get_card_list('Hosts')  # suds instance response
-#response = cmdbuild.get_card('zItems', 1391992)
-#response = cmdbuild.get_card_history('zItems', 1391992)
+response = cmdbuild.get_card_list('Hosts')
+for hostid, v in response['Id'].items():
+    if isinstance(hostid, int):
+        filter = {'name':'hostid','operator':'EQUALS','value':hostid} # added filter
+        v['zItems'] = cmdbuild.get_card_list('zItems', _filter=filter) # get zItems card
+        v['zTriggers'] = cmdbuild.get_card_list('ztriggers', _filter=filter) # get ztriggers card
+        v['zApplications'] = cmdbuild.get_card_list('zapplications', _filter=filter) # get zapplications card
+
 print(json.dumps(response, indent=2))  # Z2C format response
