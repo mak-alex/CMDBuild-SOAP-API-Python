@@ -8,8 +8,9 @@ from suds.wsse import *
 import json
 import sys
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
+if sys.version_info[:2] <= (2, 7):
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
 
 
 def xml_pretty_print(doc):
@@ -21,7 +22,8 @@ class NamespaceAndResponseCorrectionPlugin(MessagePlugin):
         pass
 
     def received(self, context):
-        reply_new = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply, re.DOTALL)[0]
+        if sys.version_info[:2] >= (2, 7):
+            reply_new = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply.decode('utf-8'), re.DOTALL)[0]
         context.reply = reply_new
 
     def marshalled(self, context):
@@ -103,8 +105,7 @@ class CMDBuild:
                 query.cqlQuery.parameters = cql_query_parameters
 
             result = self.client.service.getCardList(className=classname, attributeList=attribute_list, queryType=query)
-        except WebFault as e:
-            print(e)
+        except:
             sys.exit()
         return self.decode(result)
 
