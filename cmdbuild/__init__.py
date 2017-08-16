@@ -520,12 +520,3 @@ class CMDBuild:
         result = self.client.service.getCardMenuSchema()
         return result
 
-
-if __name__ == '__main__':
-    cmdbuild = CMDBuild(username='admin', password='3$rFvCdE', ip='10.244.244.128', verbose=True)
-    response = cmdbuild.get_card_list('Hosts')
-    if response:
-        for _id, v in response['Id'].items():
-            filter = dict(name='hostid', operator='EQUALS', value=_id)
-            v['zItems'] = cmdbuild.get_card_list('zItems', _filter=filter)
-        print(json.dumps(response, indent=2))

@@ -1,0 +1,16 @@
+Metadata-Version: 1.1
+Name: cmdbuild-soap-api
+Version: 0.1.0
+Summary: CMDBuild SOAP API Module
+Home-page: https://bitbucket.org/enlab/cmdbuild_soap_api_python
+Author: Ilya Shalyapin
+Author-email: ishalyapin@gmail.com
+License: MIT License
+Download-URL: https://bitbucket.org/enlab/cmdbuild_soap_api_python/tarball/master
+Description: UNKNOWN
+Keywords: cmdbuild,soap,api,cmdbuild api,cmdbuild soap,cmdbuild soap api
+Platform: UNKNOWN
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python
+Requires: python (>= 2.5)
