@@ -74,7 +74,7 @@ def decode(t):
                 print('Cards classname: \'{0}\' with filter: {1}, total rows: \'{2}\' - obtained'
                       .format(args[1], kwargs['_filter'], total_rows))
             else:
-                print('Card classname: \'{0}\', id: \'{1}\' - obtained'.format(args[1], total_rows))
+                print('Cards classname: \'{0}\', total_rows: \'{1}\' - obtained'.format(args[1], total_rows))
 
         def _do_create(attributes, _id, _outtab):
             for j, attribute in enumerate(attributes):
@@ -522,12 +522,10 @@ class CMDBuild:
 
 
 if __name__ == '__main__':
-    cmdbuild = CMDBuild('admin', '3$rFvCdE', '10.244.244.128')
-    cmdbuild.auth()
-
+    cmdbuild = CMDBuild(username='admin', password='3$rFvCdE', ip='10.244.244.128', verbose=True)
     response = cmdbuild.get_card_list('Hosts')
     if response:
         for _id, v in response['Id'].items():
             filter = dict(name='hostid', operator='EQUALS', value=_id)
             v['zItems'] = cmdbuild.get_card_list('zItems', _filter=filter)
-        print(json.dumps(response, indent=2))  # Z2C format response
+        print(json.dumps(response, indent=2))

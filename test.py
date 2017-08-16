@@ -20,6 +20,7 @@ def main():
     filter = dict(name='Address', operator='EQUALS', value='192.192.192.192/24')
     response = cmdbuild.get_card_list('AddressesIPv4', _filter=filter)
     for _id, v in response['Id'].items():
-        print(cmdbuild.delete_card('AddressesIPv4', _id))
+        (cmdbuild.update_card('AddressesIPv4', _id, {'Address': '192.192.192.192/24'}))
+        (cmdbuild.delete_card('AddressesIPv4', _id))
 if __name__ == '__main__':
     main()
