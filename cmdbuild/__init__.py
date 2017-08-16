@@ -122,7 +122,11 @@ class NamespaceAndResponseCorrectionPlugin(MessagePlugin):
         pass
 
     def received(self, context):
-        context.reply = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply, re.DOTALL)[0]
+        if sys.version_info[:2] >= (2, 7):
+            reply_new = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply.decode('utf-8'), re.DOTALL)[0]
+        else:
+            reply_new = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply, re.DOTALL)[0]
+        context.reply = reply_new
 
     def marshalled(self, context):
         url = 'http://docs.oasis-open.org/wss/2004/01/'
