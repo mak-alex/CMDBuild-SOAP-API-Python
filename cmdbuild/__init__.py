@@ -1,18 +1,127 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 import re
+import sys
 import json
+import logging
+import datetime
 from suds.client import Client
 from suds.plugin import MessagePlugin
-from suds.wsse import *
+from suds.wsse import UsernameToken, Security
+from suds import WebFault
+
+__author__ = "Alexandr Mikhailenko a.k.a Alex M.A.K."
+__copyright__ = "Copyright 2017, Ltd Kazniie Innovation"
+__license__ = "MIT"
+__version__ = "1.0"
+__email__ = "alex-m.a.k@yandex.kz"
+__status__ = "Production"
 
 # todo: реализовать работу по токену
 # todo: дописать остальные методы
 # todo: провести рефакторинг и задокументировать методы
 
-if sys.version_info[:2] <= (2, 7):
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
+
+def decode(t):
+    def wrapped(*args, **kwargs):
+        def _to_dict(obj, key_to_lower=False, json_serialize=False):
+            """
+                Decode SOAP message to JSON Dict
+            """
+
+            if not hasattr(obj, '__keylist__'):
+                if json_serialize and isinstance(
+                        obj,
+                        (datetime.datetime, datetime.time, datetime.date)
+                ):
+                    return obj.isoformat()
+                else:
+                    return obj
+
+            data = {}
+            fields = obj.__keylist__
+            for i, field in enumerate(fields):
+                val = getattr(obj, field)
+                if key_to_lower:
+                    field = field.lower()
+                if isinstance(val, list):
+                    data[field] = []
+                    for item in val:
+                        data[field].append(
+                            _to_dict(item, json_serialize=json_serialize)
+                        )
+                else:
+                    data[field] = _to_dict(val, json_serialize=json_serialize)
+            return data
+
+        outtab = {'Id': {}}
+        cards = _to_dict(t(*args, **kwargs), key_to_lower=False, json_serialize=True)
+
+        if not cards:
+            return
+
+        def total_rows(l):
+            """
+            :param l: dict
+            :return: int
+            """
+            if l:
+                if 'totalRows' in l:
+                    if isinstance(l['totalRows'], int):
+                        return l['totalRows']
+                return 1
+            else:
+                return 0
+
+        total_rows = total_rows(cards)
+        if args[0].__class__.verbose:
+            if '_filter' in kwargs:
+                print('Cards classname: \'{0}\' with filter: {1}, total rows: \'{2}\' - obtained'
+                      .format(args[1], kwargs['_filter'], total_rows))
+            else:
+                print('Card classname: \'{0}\', id: \'{1}\' - obtained'.format(args[1], total_rows))
+
+        def _do_create(attributes, _id, _outtab):
+            for j, attribute in enumerate(attributes):
+                if isinstance(attribute, dict):
+                    code = None
+                    if len(attribute) > 2:
+                        code = attribute['code'] or ""
+                    key = attribute['name']
+                    value = attribute['value'] or ""
+                    if key:
+                        if not code and value:
+                            _outtab['Id'][_id][key] = value
+                        else:
+                            if value:
+                                _outtab['Id'][_id][key] = {
+                                    "value": value, "code": code
+                                }
+            return _outtab
+
+        if total_rows >= 2:
+            if isinstance(cards, int):
+                outtab['Id'] = {cards: {}}
+            else:
+                if cards['cards']:
+                    cards = cards['cards']
+                else:
+                    cards = cards['card']
+
+                for card in cards:
+                    mid = card['id']
+                    outtab['Id'][mid] = {}
+                    _do_create(card['attributeList'], mid, outtab)
+        else:
+            if 'cards' in cards:
+                cards = cards['cards'][0]
+            oid = cards['id']
+            outtab['Id'][oid] = {}
+            _do_create(cards['attributeList'], oid, outtab)
+
+        return outtab
+
+    return wrapped
 
 
 class NamespaceAndResponseCorrectionPlugin(MessagePlugin):
@@ -20,33 +129,34 @@ class NamespaceAndResponseCorrectionPlugin(MessagePlugin):
         pass
 
     def received(self, context):
-        if sys.version_info[:2] >= (2, 7):
-            reply_new = re.findall(
-                "<soap:Envelope.+</soap:Envelope>",
-                context.reply.decode('utf-8'), re.DOTALL
-            )[0]
-        context.reply = reply_new
+        context.reply = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply, re.DOTALL)[0]
 
     def marshalled(self, context):
         url = 'http://docs.oasis-open.org/wss/2004/01/'
-        pass_type = url + 'oasis-200401-wss-username-token-profile-1.0#PasswordText'
+        passt = url + 'oasis-200401-wss-username-token-profile-1.0#PasswordText'
         password = context.envelope \
             .getChild('Header') \
             .getChild('Security') \
             .getChild('UsernameToken') \
             .getChild('Password')
-        password.set('Type', pass_type)
+        password.set('Type', passt)
 
 
 class CMDBuild:
     """
     CMDBuild SOAP API Library
+
+    Args:
+        username (string)
+        password (string)
+        ip (string)
+        verbose (bool)
+        debug (bool)
+
     Example:
-        cmdbuild = CMDBuild('admin', '3$rFvCdE', '10.244.244.128')
-        cmdbuild.auth()
-        response = cmdbuild.get_card_list('Hosts')
-        if response:
-            print(json.dumps(response, indent=2))  # Z2C format response
+        cmdbuild = CMDBuild(username='admin', password='3$rFvCdE', ip='10.244.244.128')
+        print(json.dumps(cmdbuild.get_card_list('Hosts'), indent=2))
+
     Response example:
         {
             Id: {
@@ -59,14 +169,19 @@ class CMDBuild:
 
     """
 
-    def __init__(self, username=None, password=None, ip='localhost', verbose=True, _debug=False):
+    def __init__(self, username=None, password=None, ip=None, verbose=False, debug=False):
+        self.ip = ip
+        self.client = None
         self.username = username
         self.password = password
-        self.ip = ip
+        self.__class__.debug = debug
+        self.__class__.verbose = verbose
         self.url = 'http://{}/cmdbuild/services/soap/Webservices?wsdl'.format(self.ip)
-        self.client = None
         if self.username and self.password:
             self.auth(self.username, self.password)
+        if self.debug:
+            logging.basicConfig(level=logging.INFO)
+            logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
     def auth(self, username=None, password=None):
         if not self.username and not self.password:
@@ -74,11 +189,13 @@ class CMDBuild:
                 self.username = username
                 self.password = password
             else:
-                print('`username\' and/or `password\' can\'t be empty')
+                if self.verbose:
+                    print('`username\' and/or `password\' can\'t be empty')
                 sys.exit(-1)
         try:
-            self.client = Client(self.url, plugins=[NamespaceAndResponseCorrectionPlugin()])
-        except Exception as e:
+            headers = {'Content-Type': 'application/soap+xml; charset="ascii"'}
+            self.client = Client(self.url, headers=headers, plugins=[NamespaceAndResponseCorrectionPlugin()])
+        except WebFault:
             print('Failed to create a new instance of the SUDS, '
                   'check the settings are correct, ip address, etc.')
             import requests
@@ -86,62 +203,90 @@ class CMDBuild:
                 resp = requests.get(self.url)
                 if resp.status_code:
                     print("Oops! URL address: {}  is not available".format(self.url))
-            except requests.ConnectionError as e:
+            except requests.ConnectionError:
                 print("Oops! URL address: {}  is not available".format(self.url))
             sys.exit(-1)
 
+        security = Security()
+
         try:
-            security = Security()
+            token = None
             if self.username and self.password:
                 token = UsernameToken(self.username, self.password)
-                token.setcreated()
             security.tokens.append(token)
-        except:
-            print(
-                'Failed to create or add a token, args: username={0}, password={1}'.format(self.username,
-                                                                                           self.password))
+        except WebFault:
+            print('Failed to create token, args: username={0}, password={1}'.format(self.username, self.password))
             sys.exit(-1)
         self.client.set_options(wsse=security)
 
+    @decode
     def get_card(self, classname, card_id, attributes_list=None):
+        """
+        Get card
+        :param classname:
+        :param card_id:
+        :param attributes_list:
+        :return: dict
+        """
         attribute_list = []
         if attributes_list:
             attribute = self.client.factory.create('ns0:attribute')
             for i, item in enumerate(attributes_list):
                 attribute.name = attributes_list[i]
             attribute_list.append(attribute)
-
         try:
             result = self.client.service.getCard(className=classname, cardId=card_id, attributeList=attributes_list)
-            if result:
-                print('Card classname: \'{0}\', id: \'{1}\' - obtained'.format(classname, card_id))
-        except:
+        except WebFault:
             print('Failed to get card for classname: {0}, id: {1}'.format(classname, card_id))
             sys.exit()
-        return decode(result)
+        return result
 
+    @decode
     def get_card_history(self, classname, card_id, limit=None, offset=None):
+        """
+        Get card history
+        :param classname:
+        :param card_id:
+        :param limit:
+        :param offset:
+        :return: dict
+        """
         try:
             result = self.client.service.getCardHistory(className=classname, cardId=card_id, limit=limit, offset=offset)
             if result:
                 if result[0] == 0:
                     sys.exit()
-                print('Card history classname: \'{0}\', id: \'{1}\' - obtained'.format(classname, card_id))
-        except:
+        except WebFault:
             print('Failed to get history card for classname: \'{0}\', id: \'{1}\''.format(classname, card_id))
             sys.exit()
-        return decode(result)
+        return result
 
-    def get_card_list(self, classname, attributes_list=None, _filter=None, filter_sq_operator=None,
-                      order_type=None, limit=None, offset=None, full_text_query=None, cql_query=None,
+    @decode
+    def get_card_list(self, classname, attributes_list=None, _filter=None,
+                      filter_sq_operator=None, order_type=None, limit=None,
+                      offset=None, full_text_query=None, cql_query=None,
                       cql_query_parameters=None):
-        attribute_list = []
+        """
+        Get cards from CDMBuild
+        :param classname: string
+        :param attributes_list: list
+        :param _filter: dict
+        :param filter_sq_operator:
+        :param order_type:
+        :param limit:
+        :param offset:
+        :param full_text_query:
+        :param cql_query:
+        :param cql_query_parameters:
+        :return: dict
+        """
+        attributes = []
         query = self.client.factory.create('ns0:query')
         if attributes_list:
             attribute = self.client.factory.create('ns0:attribute')
             for i, item in enumerate(attributes_list):
                 attribute.name = attributes_list[i]
-            attribute_list.append(attribute)
+            attributes.append(attribute)
 
         if _filter or filter_sq_operator:
             if _filter and not filter_sq_operator:
@@ -163,92 +308,103 @@ class CMDBuild:
             query.cqlQuery.parameters = cql_query_parameters
 
         try:
-            result = self.client.service.getCardList(className=classname, attributeList=attribute_list, queryType=query)
+            result = self.client.service.getCardList(className=classname, attributeList=attributes, queryType=query)
             if not result[0]:
                 print('Failed to get cards for classname: {0}, total rows: {1}'.format(classname, result[0]))
                 sys.exit()
-            else:
-                if _filter:
-                    print('Cards classname: \'{0}\' with filter: {1}, total rows: \'{2}\' - obtained'.format(classname,
-                                                                                                             _filter,
-                                                                                                             result[1]))
-                else:
-                    print('Cards classname: \'{0}\', total rows: \'{1}\' - obtained'.format(classname, result[1]))
-        except:
+        except WebFault:
             print('Failed to get cards for classname: {}'.format(classname))
             sys.exit()
 
-        return decode(result)
+        return result
 
     def delete_card(self, classname, card_id):
+        """
+
+        :param classname:
+        :param card_id:
+        :return: boolean
+        """
         try:
             result = self.client.service.deleteCard(className=classname, cardId=card_id)
-            print('Card classname: \'{0}\', id: \'{1}\' - removed'.format(classname, card_id))
-        except:
+            if self.verbose:
+                print('Card classname: \'{0}\', id: \'{1}\' - removed'.format(classname, card_id))
+        except WebFault:
             print('Can\'t delete a card, class name: \'{0}\', ID: \'{1}\''.format(classname, card_id))
             sys.exit()
-        return decode(result)
+        return result
 
     def create_card(self, classname, attributes_list, metadata=None):
+        """
+
+        :param classname:
+        :param attributes_list:
+        :param metadata:
+        :return: int
+        """
         cardType = self.client.factory.create('ns0:cardType')
         cardType.className = classname
+        attributes = []
+        attributeList = self.client.factory.create('ns0:attributeList')
         if attributes_list:
-            attribute_list = []
-            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
-                for attributes in attributes_list:
-                    for k, v in attributes.items():
-                        attribute.name = k
-                        attribute.value = v
-                    attribute_list.append(attribute)
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attributeList.name = k
+                        attributeList.value = _v
+                    attributes.append(attributeList)
             else:
-                for k, v in attributes_list.items():
-                    attribute.name = k
-                    attribute.value = v
-                attribute_list.append(attribute)
-            cardType.attributeList = attribute_list
+                for k, _v in attributes_list.items():
+                    attributeList.name = k
+                    attributeList.value = _v
+                attributes.append(attributeList)
+            cardType.attributeList = attributes
 
         if metadata:
             cardType.metadata = metadata
 
+        result = None
         try:
             result = self.client.service.createCard(cardType)
             if result:
-                print(
-                    'Card classname: \'{0}\', id: \'{1}\' with: {2} - created'.format(classname, result,
-                                                                                      attribute_list))
-        except:
-            for k, v in attributes_list.items():
-                filter = {'name': k, 'operator': 'EQUALS', 'value': v}
-            print('Don\'t create card classname: \'{0}\' with: {1},  maybe exists'.format(classname, attribute_list))
-            print("Attempt getting card classname: {0}, with filter: {{\"name\":{name}, \"operator\":{operator}, "
-                  "\"value\":{value}}}".format(classname, **filter))
-            result = self.get_card_list(classname, _filter=filter)
-        if isinstance(result, dict):
-            return result
-        else:
-            return decode(result)
+                if self.verbose:
+                    print('Card classname: \'{0}\', id: \'{1}\' with: {2} - created'
+                          .format(classname, result, attributes))
+        except WebFault:
+            if self.verbose:
+                print('Don\'t create card classname: \'{0}\' with: {1},  maybe exists'.format(classname, attributes))
+
+        return result
 
     def update_card(self, classname, card_id, attributes_list, metadata=None, begin_date=None):
+        """
+
+        :param classname:
+        :param card_id:
+        :param attributes_list:
+        :param metadata:
+        :param begin_date:
+        :return: boolean
+        """
         cardType = self.client.factory.create('ns0:card')
         cardType.className = classname
         cardType.id = card_id
         cardType.beginDate = begin_date
+        attributes = []
+        attributeList = self.client.factory.create('ns0:attributeList')
         if attributes_list:
-            attribute_list = []
-            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
-                for attributes in attributes_list:
-                    for k, v in attributes.items():
-                        attribute.name = k
-                        attribute.value = v
-                    attribute_list.append(attribute)
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attributeList.name = k
+                        attributeList.value = _v
+                    attributes.append(attributeList)
             else:
-                for k, v in attributes_list.items():
-                    attribute.name = k
-                    attribute.value = v
-                attribute_list.append(attribute)
-            cardType.attributeList = attribute_list
+                for k, _v in attributes_list.items():
+                    attributeList.name = k
+                    attributeList.value = _v
+                attributes.append(attributeList)
+            cardType.attributeList = attributes
 
         if metadata:
             cardType.metadata = metadata
@@ -256,15 +412,15 @@ class CMDBuild:
         try:
             result = self.client.service.updateCard(cardType)
             if result:
-                print(
-                    'Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - updated'.format(classname, card_id,
-                                                                                                     attribute_list))
-        except:
-            print('Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - can\'t be updated'.format(classname,
-                                                                                                             card_id,
-                                                                                                             attribute_list))
+                if self.verbose:
+                    print('Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - updated'
+                          .format(classname, card_id, attributes))
+        except WebFault:
+            if self.verbose:
+                print('Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - can\'t be updated'
+                      .format(classname, card_id, attributes))
             sys.exit()
-        return decode(result)
+        return result
 
     def create_lookup(self, lookup_type, code, description, lookup_id=None, notes=None, parent_id=None, position=None):
         lookup = self.client.factory.create('ns0:lookup')
@@ -280,14 +436,14 @@ class CMDBuild:
         lookup.type = lookup_type
         try:
             result = self.client.service.createLookup(lookup)
-        except:
+        except WebFault:
             sys.exit()
 
-        return decode(result)
+        return result
 
     def delete_lookup(self, lookup_id):
         result = self.client.service.deleteLookup(lookupId=lookup_id)
-        return decode(result)
+        return result
 
     def update_lookup(self, lookup_type, code, description, lookup_id=None, notes=None, parent_id=None, position=None):
         lookup = self.client.factory.create('ns0:lookup')
@@ -303,146 +459,67 @@ class CMDBuild:
         lookup.type = lookup_type
         try:
             result = self.client.service.updateLookup(lookup)
-        except:
+        except WebFault:
             sys.exit()
 
-        return decode(result)
+        return result
 
     def get_lookup_list(self, lookup_type, value, parent_list):
         result = self.client.service.getLookupList(lookup_type, value, parent_list)
-        return decode(result)
+        return result
 
     def get_lookup_by_id(self, lookup_id):
         result = self.client.service.getLookupById(lookup_id)
-        return decode(result)
+        return result
 
     def create_relation(self):
         result = self.client.service.createRelation()
-        return decode(result)
+        return result
 
     def delete_relation(self):
         result = self.client.service.deleteRelation()
-        return decode(result)
+        return result
 
     def get_relation_list(self, domain, classname, card_id):
-        result = self.client.service.getRelationList(domain=domain, className=classname, cardId=card_id)
-        return decode(result)
+        result = self.client.service.getRelationList(
+            domain=domain, className=classname, cardId=card_id)
+        return result
 
     def get_relation_history(self):
         result = self.client.service.getRelationHistory()
-        return decode(result)
+        return result
 
     def start_workflow(self):
         result = self.client.service.startWorkflow()
-        return decode(result)
+        return result
 
     def update_workflow(self):
         result = self.client.service.updateWorkflow()
-        return decode(result)
+        return result
 
     def upload_attachment(self):
         result = self.client.service.uploadAttachment()
-        return decode(result)
+        return result
 
     def download_attachment(self):
         result = self.client.service.downloadAttachment()
-        return decode(result)
+        return result
 
     def delete_attachment(self):
         result = self.client.service.deleteAttachment()
-        return decode(result)
+        return result
 
     def update_attachment(self):
         result = self.client.service.updateAttachment()
-        return decode(result)
+        return result
 
     def get_menu_schema(self):
         result = self.client.service.getMenuSchema()
-        return decode(result)
+        return result
 
     def get_card_menu_schema(self):
         result = self.client.service.getCardMenuSchema()
-        return decode(result)
-
-
-def decode(_response):
-    def suds_to_dict(obj, key_to_lower=False, json_serialize=False):
-        import datetime
-
-        if not hasattr(obj, '__keylist__'):
-            if json_serialize and isinstance(obj, (datetime.datetime, datetime.time, datetime.date)):
-                return obj.isoformat()
-            else:
-                return obj
-
-        data = {}
-        fields = obj.__keylist__
-        for i, field in enumerate(fields):
-            val = getattr(obj, field)
-            if key_to_lower:
-                field = field.lower()
-            if isinstance(val, list):
-                data[field] = []
-                for item in val:
-                    data[field].append(
-                        suds_to_dict(item, json_serialize=json_serialize)
-                    )
-            else:
-                data[field] = suds_to_dict(val, json_serialize=json_serialize)
-        return data
-
-    outtab = {'Id': {}}
-    cards = suds_to_dict(
-        _response, key_to_lower=False, json_serialize=True
-    )
-
-    try:
-        if isinstance(cards, int):
-            outtab['Id'] = {cards: {}}
-        else:
-            if cards['cards']:
-                cards = cards['cards']
-            else:
-                cards = cards['card']
-            for card in cards:
-                _id = card['id']
-                outtab['Id'][_id] = {}
-                attributes = card['attributeList']
-                for j, attribute in enumerate(attributes):
-                    if isinstance(attribute, dict):
-                        code = None
-                        if len(attribute) > 2:
-                            code = attribute['code'] or ""
-                        key = attribute['name']
-                        value = attribute['value'] or ""
-                        if key:
-                            if not code and value:
-                                outtab['Id'][_id][key] = value
-                            else:
-                                if value:
-                                    outtab['Id'][_id][key] = {
-                                        "value": value, "code": code
-                                    }
-    except Exception as e:
-        _id = cards['id']
-        outtab['Id'][_id] = {}
-        attributes = cards['attributeList']
-        for j, attribute in enumerate(attributes):
-            if isinstance(attribute, dict):
-                code = None
-                if len(attribute) > 2:
-                    code = attribute['code'] or ""
-                key = attribute['name']
-                value = attribute['value'] or ""
-                if key:
-                    if not code and value:
-                        outtab['Id'][_id][key] = value
-                    else:
-                        if value:
-                            outtab['Id'][_id][key] = {
-                                "value": value, "code": code
-                            }
-    return outtab
+        return result
 
 
 if __name__ == '__main__':
@@ -451,4 +528,7 @@ if __name__ == '__main__':
 
     response = cmdbuild.get_card_list('Hosts')
     if response:
+        for _id, v in response['Id'].items():
+            filter = dict(name='hostid', operator='EQUALS', value=_id)
+            v['zItems'] = cmdbuild.get_card_list('zItems', _filter=filter)
         print(json.dumps(response, indent=2))  # Z2C format response
