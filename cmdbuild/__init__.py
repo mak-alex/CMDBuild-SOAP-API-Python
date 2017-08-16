@@ -368,10 +368,10 @@ class CMDBuild:
             if result:
                 if self.verbose:
                     print('Card classname: \'{0}\', id: \'{1}\' with: {2} - created'
-                          .format(classname, result, attributes))
+                          .format(classname, result, attributes_list))
         except WebFault:
             if self.verbose:
-                print('Don\'t create card classname: \'{0}\' with: {1},  maybe exists'.format(classname, attributes))
+                print('Don\'t create card classname: \'{0}\' with: {1},  maybe exists'.format(classname, attributes_list))
 
         return result
 
