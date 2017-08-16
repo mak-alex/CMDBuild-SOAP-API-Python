@@ -30,10 +30,7 @@ def decode(t):
             """
 
             if not hasattr(obj, '__keylist__'):
-                if json_serialize and isinstance(
-                        obj,
-                        (datetime.datetime, datetime.time, datetime.date)
-                ):
+                if json_serialize and isinstance(obj, (datetime.datetime, datetime.time, datetime.date)):
                     return obj.isoformat()
                 else:
                     return obj
@@ -47,9 +44,7 @@ def decode(t):
                 if isinstance(val, list):
                     data[field] = []
                     for item in val:
-                        data[field].append(
-                            _to_dict(item, json_serialize=json_serialize)
-                        )
+                        data[field].append(_to_dict(item, json_serialize=json_serialize))
                 else:
                     data[field] = _to_dict(val, json_serialize=json_serialize)
             return data
@@ -94,9 +89,7 @@ def decode(t):
                             _outtab['Id'][_id][key] = value
                         else:
                             if value:
-                                _outtab['Id'][_id][key] = {
-                                    "value": value, "code": code
-                                }
+                                _outtab['Id'][_id][key] = {"value": value, "code": code}
             return _outtab
 
         if total_rows >= 2:
@@ -174,12 +167,14 @@ class CMDBuild:
         self.client = None
         self.username = username
         self.password = password
-        self.__class__.debug = debug
-        self.__class__.verbose = verbose
+        self.verbose = verbose
+        self.__class__.verbose = self.verbose
         self.url = 'http://{}/cmdbuild/services/soap/Webservices?wsdl'.format(self.ip)
+
         if self.username and self.password:
             self.auth(self.username, self.password)
-        if self.debug:
+
+        if debug:
             logging.basicConfig(level=logging.INFO)
             logging.getLogger('suds.client').setLevel(logging.DEBUG)
 
