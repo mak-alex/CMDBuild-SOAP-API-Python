@@ -3,10 +3,10 @@ Name: cmdbuild-soap-api
 Version: 0.1.0
 Summary: CMDBuild SOAP API Module
 Home-page: https://bitbucket.org/enlab/cmdbuild_soap_api_python
-Author: Ilya Shalyapin
-Author-email: ishalyapin@gmail.com
+Author: Alexandr Mikhailenko a.k.a Alex M.A.K.
+Author-email: alex-m.a.k@yandex.kz
 License: MIT License
-Download-URL: https://bitbucket.org/enlab/cmdbuild_soap_api_python/tarball/master
+Download-URL: https://bitbucket.org/enlab/cmdbuild_soap_api_python/get/master.tar.gz
 Description: UNKNOWN
 Keywords: cmdbuild,soap,api,cmdbuild api,cmdbuild soap,cmdbuild soap api
 Platform: UNKNOWN

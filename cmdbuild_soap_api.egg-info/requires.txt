@@ -1,1 +1,2 @@
 suds
+suds-py3-fixes

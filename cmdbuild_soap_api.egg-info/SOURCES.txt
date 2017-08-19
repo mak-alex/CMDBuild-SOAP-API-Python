@@ -1,7 +1,7 @@
 MANIFEST.in
 README.markdown
+setup.py
 cmdbuild/__init__.py
-cmdbuild/models.py
 cmdbuild_soap_api.egg-info/PKG-INFO
 cmdbuild_soap_api.egg-info/SOURCES.txt
 cmdbuild_soap_api.egg-info/dependency_links.txt

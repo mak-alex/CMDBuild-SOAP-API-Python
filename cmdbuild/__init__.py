@@ -166,14 +166,13 @@ class CMDBuild:
 
     """
 
-    def __init__(self, username=None, password=None, ip=None, verbose=False, debug=False):
-        self.ip = ip
+    def __init__(self, username=None, password=None, url=None, verbose=False, debug=False):
+        self.url = url
         self.client = None
         self.username = username
         self.password = password
         self.verbose = verbose
         self.__class__.verbose = self.verbose
-        self.url = 'http://{}/cmdbuild/services/soap/Webservices?wsdl'.format(self.ip)
 
         if self.username and self.password:
             self.auth(self.username, self.password)
@@ -519,4 +518,3 @@ class CMDBuild:
     def get_card_menu_schema(self):
         result = self.client.service.getCardMenuSchema()
         return result
-
