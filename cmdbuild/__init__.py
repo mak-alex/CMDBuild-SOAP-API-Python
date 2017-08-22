@@ -27,7 +27,9 @@ def decode(t):
             """
 
             if not hasattr(obj, '__keylist__'):
-                if json_serialize and isinstance(obj, (datetime.datetime, datetime.time, datetime.date)):
+                if json_serialize \
+                    and isinstance(obj,
+                        (datetime.datetime, datetime.time, datetime.date)):
                     return obj.isoformat()
                 else:
                     return obj
@@ -41,13 +43,15 @@ def decode(t):
                 if isinstance(val, list):
                     data[field] = []
                     for item in val:
-                        data[field].append(_to_dict(item, json_serialize=json_serialize))
+                        data[field].append(
+                            _to_dict(item, json_serialize=json_serialize))
                 else:
                     data[field] = _to_dict(val, json_serialize=json_serialize)
             return data
 
         outtab = {'Id': {}}
-        cards = _to_dict(t(*args, **kwargs), key_to_lower=False, json_serialize=True)
+        cards = _to_dict(
+            t(*args, **kwargs), key_to_lower=False, json_serialize=True)
 
         if not cards:
             return
@@ -119,15 +123,17 @@ class CorrectionPlugin(MessagePlugin):
         pass
 
     def received(self, context):
+        env = "<soap:Envelope.+</soap:Envelope>"
         if sys.version_info[:2] >= (2, 7):
-            reply_new = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply.decode('utf-8'), re.DOTALL)[0]
+            reply_new = re.findall(env, context.reply.decode('utf-8'), re.DOTALL)[0]
         else:
-            reply_new = re.findall("<soap:Envelope.+</soap:Envelope>", context.reply, re.DOTALL)[0]
+            reply_new = re.findall(env, context.reply, re.DOTALL)[0]
         context.reply = reply_new
 
     def marshalled(self, context):
         url = 'http://docs.oasis-open.org/wss/2004/01/'
-        passt = url + 'oasis-200401-wss-username-token-profile-1.0#PasswordText'
+        passt = url + 'oasis-200401-wss-username-token-profile-1.0' \
+                    + '#PasswordText'
         password = context.envelope \
             .getChild('Header') \
             .getChild('Security') \
@@ -138,7 +144,12 @@ class CorrectionPlugin(MessagePlugin):
 
 class CMDBuild:
     """
-    CMDBuild SOAP API Library
+    CMDBuild SOAP API Python Wrapper
+
+    CMDBuild is an open source software
+    to manage the configuration database (CMDB).
+    CMDBuild is compliant with ITIL "best practices" for
+    the IT services management according to process-oriented criteria
 
     Args:
         username (string)
@@ -147,20 +158,13 @@ class CMDBuild:
         verbose (bool)
         debug (bool)
 
-    Example:
-        cmdbuild = CMDBuild(username='admin', password='3$rFvCdE', url='http://*/Webservices?wsdl')
+    Usage:
+        cmdbuild = CMDBuild(
+            username='admin',
+            password='3$rFvCdE',
+            url='http://*/Webservices?wsdl'
+        )
         print(json.dumps(cmdbuild.get_card_list('Hosts'), indent=2))
-
-    Response example:
-        {
-            Id: {
-                "19234289": {
-                    "Description": "...",
-                    ...
-                }
-            }
-        }
-
     """
 
     def __init__(self, username=None, password=None, url=None, verbose=False, debug=False):
@@ -423,7 +427,11 @@ class CMDBuild:
         return result
 
     def delete_lookup(self, lookup_id):
-        result = self.client.service.deleteLookup(lookupId=lookup_id)
+        try:
+            result = self.client.service.deleteLookup(lookupId=lookup_id)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def update_lookup(self, lookup_type, code, description, lookup_id=None, notes=None, parent_id=None, position=None):
@@ -450,11 +458,19 @@ class CMDBuild:
         return result
 
     def get_lookup_list_by_code(self, lookup_type, lookup_code, parent_list):
-        result = self.client.service.getLookupListByCode(lookup_type, lookup_code, parent_list)
+        try:
+            result = self.client.service.getLookupListByCode(lookup_type, lookup_code, parent_list)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_lookup_by_id(self, lookup_id):
-        result = self.client.service.getLookupById(lookup_id)
+        try:
+            result = self.client.service.getLookupById(lookup_id)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def create_relation(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
@@ -467,7 +483,11 @@ class CMDBuild:
         relation.status = status or 'A'
         relation.beginDate = begin_date
         relation.endDate = end_date
-        result = self.client.service.createRelation(relation)
+        try:
+            result = self.client.service.createRelation(relation)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def create_relation_with_attributes(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date, attributes_list):
@@ -495,7 +515,11 @@ class CMDBuild:
                     attributeList.value = _v
                 attributes.append(attributeList)
             relation.attributeList = attributes
-        result = self.client.service.createRelationWithAttributes(relation)
+        try:
+            result = self.client.service.createRelationWithAttributes(relation)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def delete_relation(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
@@ -508,17 +532,29 @@ class CMDBuild:
         relation.status = status or 'A'
         relation.beginDate = begin_date
         relation.endDate = end_date
-        result = self.client.service.deleteRelation(relation)
+        try:
+            result = self.client.service.deleteRelation(relation)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_relation_list(self, domain, classname, card_id):
-        result = self.client.service.getRelationList(
-            domain=domain, className=classname, cardId=card_id)
+        try:
+            result = self.client.service.getRelationList(
+                domain=domain, className=classname, cardId=card_id)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_relation_list_ext(self, domain, classname, card_id):
-        result = self.client.service.getRelationListExt(
-            domain=domain, className=classname, cardId=card_id)
+        try:
+            result = self.client.service.getRelationListExt(
+                domain=domain, className=classname, cardId=card_id)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_relation_history(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
@@ -531,7 +567,11 @@ class CMDBuild:
         relation.status = status or 'A'
         relation.beginDate = begin_date
         relation.endDate = end_date
-        result = self.client.service.getRelationHistory(relation)
+        try:
+            result = self.client.service.getRelationHistory(relation)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_relation_attributes(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
@@ -544,7 +584,11 @@ class CMDBuild:
         relation.status = status or 'A'
         relation.beginDate = begin_date
         relation.endDate = end_date
-        result = self.client.service.getRelationAttributes(relation)
+        try:
+            result = self.client.service.getRelationAttributes(relation)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def start_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
@@ -571,7 +615,11 @@ class CMDBuild:
             card.beginDate = begin_date
         if user:
             card.user = user
-        result = self.client.service.startWorkflow(card, complete_task)
+        try:
+            result = self.client.service.startWorkflow(card, complete_task)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def update_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
@@ -598,7 +646,11 @@ class CMDBuild:
             card.beginDate = begin_date
         if user:
             card.user = user
-        result = self.client.service.updateWorkflow(card, complete_task)
+        try:
+            result = self.client.service.updateWorkflow(card, complete_task)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def resume_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
@@ -625,53 +677,105 @@ class CMDBuild:
             card.beginDate = begin_date
         if user:
             card.user = user
-        result = self.client.service.resumeWorkflow(card, complete_task)
+        try:
+            result = self.client.service.resumeWorkflow(card, complete_task)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_reference(self, classname, query, order_type, limit, offset, full_text_query):
-        result = self.client.service.getReference(classname, query, order_type, limit, offset, full_text_query)
+        try:
+            result = self.client.service.getReference(classname, query, order_type, limit, offset, full_text_query)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_attachment_list(self, classname, card_id=None):
-        result = self.client.service.getAttachmentList(classname, card_id)
+        try:
+            result = self.client.service.getAttachmentList(classname, card_id)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def upload_attachment(self, class_name, object_id, _file, filename, category, description):
-        result = self.client.service.uploadAttachment(class_name, object_id, _file, filename, category, description)
+        try:
+            result = self.client.service.uploadAttachment(class_name, object_id, _file, filename, category, description)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def download_attachment(self, classname, object_id, filename):
-        result = self.client.service.downloadAttachment(classname, object_id, filename)
+        try:
+            result = self.client.service.downloadAttachment(classname, object_id, filename)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def delete_attachment(self, classname, card_id, filename):
-        result = self.client.service.deleteAttachment(classname, card_id, filename)
+        try:
+            result = self.client.service.deleteAttachment(classname, card_id, filename)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def update_attachment_description(self, classname, card_id, filename, description):
-        result = self.client.service.updateAttachmentDescription(classname, card_id, filename, description)
+        try:
+            result = self.client.service.updateAttachmentDescription(classname, card_id, filename, description)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_activity_menu_schema(self):
-        result = self.client.service.getActivityMenuSchema()
+        try:
+            result = self.client.service.getActivityMenuSchema()
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_activity_objects(self, classname, card_id):
-        result = self.client.service.getActivityObjects(classname, card_id)
+        try:
+            result = self.client.service.getActivityObjects(classname, card_id)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_attribute_list(self, classname):
-        result = self.client.service.getAttributeList(classname)
+        try:
+            result = self.client.service.getAttributeList(classname)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_menu_schema(self):
-        result = self.client.service.getMenuSchema()
+        try:
+            result = self.client.service.getMenuSchema()
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_card_menu_schema(self):
-        result = self.client.service.getCardMenuSchema()
+        try:
+            result = self.client.service.getCardMenuSchema()
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result
 
     def get_process_help(self, classname, card_id):
-        result = self.client.service.getProcessHelp(classname, card_id)
+        try:
+            result = self.client.service.getProcessHelp(classname, card_id)
+        except WebFault as e:
+            print(e)
+            sys.exit()
         return result

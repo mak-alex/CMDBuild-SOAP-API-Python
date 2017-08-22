@@ -8,7 +8,8 @@ CMDBuild is compliant with ITIL "best practices" for the IT services management 
 	 http://www.cmdbuild.org/file/manuali/webservice-manual-in-english
    
 ###Dependencies
-	suds
+ - suds
+ - requests
    
 ###Install
 	easy_install cmdbuild-soap-api
