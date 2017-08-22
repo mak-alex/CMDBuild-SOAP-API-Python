@@ -5,17 +5,18 @@ CMDBuild is an open source software to manage the configuration database (CMDB).
 CMDBuild is compliant with ITIL "best practices" for the IT services management according to process-oriented criteria.
 
 ###CMDBuild Webservice Manual:
-   http://www.cmdbuild.org/file/manuali/webservice-manual-in-english
+	 http://www.cmdbuild.org/file/manuali/webservice-manual-in-english
    
 ###Dependencies
-   suds
+	suds
    
 ###Install
-   easy_install cmdbuild-soap-api
-   or easy_install suds && git clone --depth=1 https://bitbucket.org/enlab/cmdbuild_soap_api_python cmdbuild
+	easy_install cmdbuild-soap-api
+#####or 
+	easy_install suds && git clone --depth=1 https://bitbucket.org/enlab/cmdbuild_soap_api_python cmdbuild
    
 ```python
-    class CMDBuild:
+    class CMDBuild
       __init__(self, username=None, password=None, url=None, verbose=False, debug=False)
       auth(self, username=None, password=None)
       get_card(self, classname, card_id, attributes_list=None)
@@ -66,3 +67,4 @@ print(json.dumps(hosts, indent=2, ensure_ascii=False, sort_keys=False))
 ```
 
 #### Please report error with the hashtag **#cmdbuild_soap_api_python** to the mail <alex-m.a.k@yandex.kz>
+
