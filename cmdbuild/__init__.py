@@ -462,7 +462,7 @@ class CMDBuild:
 
         return result
 
-    def get_lookup_list(self, lookup_type, value, parent_list):
+    def get_lookup_list(self, lookup_type=None, value=None, parent_list=None):
         result = self.client.service.getLookupList(lookup_type, value, parent_list)
         return result
 
