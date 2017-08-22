@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
-import json
 import logging
 import datetime
 from suds.client import Client
@@ -17,9 +16,7 @@ __version__ = "1.0"
 __email__ = "alex-m.a.k@yandex.kz"
 __status__ = "Production"
 
-# todo: реализовать работу по токену
-# todo: дописать остальные методы
-# todo: провести рефакторинг и задокументировать методы
+# todo: часть аргументов необходимо переписать в соответствии с документацией
 
 
 def decode(t):
@@ -547,7 +544,7 @@ class CMDBuild:
         relation.status = status or 'A'
         relation.beginDate = begin_date
         relation.endDate = end_date
-        result = self.client.service.getRelationHistory(relation)
+        result = self.client.service.getRelationAttributes(relation)
         return result
 
     def start_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
