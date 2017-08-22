@@ -66,5 +66,7 @@ print(json.dumps(hosts, indent=2, ensure_ascii=False, sort_keys=False))
 #    print(t.get_lookup_by_id(lookup['id']))
 ```
 
+##### P.S. Test version. When I have time, working on it.
+
 #### Please report error with the hashtag **#cmdbuild_soap_api_python** to the mail <alex-m.a.k@yandex.kz>
 
