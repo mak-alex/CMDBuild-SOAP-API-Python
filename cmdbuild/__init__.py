@@ -453,11 +453,11 @@ class CMDBuild:
 
         return result
 
-    def get_lookup_list(self, lookup_type=None, value=None, parent_list=None):
+    def get_lookup_list(self, lookup_type=None, value=None, parent_list=False):
         result = self.client.service.getLookupList(lookup_type, value, parent_list)
         return result
 
-    def get_lookup_list_by_code(self, lookup_type, lookup_code, parent_list):
+    def get_lookup_list_by_code(self, lookup_type, lookup_code, parent_list=False):
         try:
             result = self.client.service.getLookupListByCode(lookup_type, lookup_code, parent_list)
         except WebFault as e:
@@ -539,7 +539,7 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def get_relation_list(self, domain, classname, card_id):
+    def get_relation_list(self, domain=None, classname=None, card_id=None):
         try:
             result = self.client.service.getRelationList(
                 domain=domain, className=classname, cardId=card_id)
@@ -548,7 +548,7 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def get_relation_list_ext(self, domain, classname, card_id):
+    def get_relation_list_ext(self, domain=None, classname=None, card_id=None):
         try:
             result = self.client.service.getRelationListExt(
                 domain=domain, className=classname, cardId=card_id)
@@ -684,7 +684,7 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def get_reference(self, classname, query, order_type, limit, offset, full_text_query):
+    def get_reference(self, classname, query=None, order_type=None, limit=None, offset=None, full_text_query=None):
         try:
             result = self.client.service.getReference(classname, query, order_type, limit, offset, full_text_query)
         except WebFault as e:
