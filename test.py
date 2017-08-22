@@ -8,7 +8,8 @@ t = cmdbuild(
     verbose=True,
     debug=False
 )
-
+print(t.client)
+"""
 h = t.get_card_list('Hosts')
 print(json.dumps(h, indent=2, ensure_ascii=False, sort_keys=False))
 i = t.get_card_list('zItems')
@@ -18,3 +19,4 @@ print(json.dumps(ione, indent=2, ensure_ascii=False, sort_keys=False))
 l = t.get_lookup_list('LOC_TYPE')
 for i in l:
     print(t.get_lookup_by_id(i['id']))
+"""

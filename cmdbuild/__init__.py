@@ -117,7 +117,7 @@ def decode(t):
     return wrapped
 
 
-class NamespaceAndResponseCorrectionPlugin(MessagePlugin):
+class CorrectionPlugin(MessagePlugin):
     def __init__(self):
         pass
 
@@ -151,7 +151,7 @@ class CMDBuild:
         debug (bool)
 
     Example:
-        cmdbuild = CMDBuild(username='admin', password='3$rFvCdE', ip='10.244.244.128')
+        cmdbuild = CMDBuild(username='admin', password='3$rFvCdE', url='http://*/Webservices?wsdl')
         print(json.dumps(cmdbuild.get_card_list('Hosts'), indent=2))
 
     Response example:
@@ -192,7 +192,7 @@ class CMDBuild:
                 sys.exit(-1)
         try:
             headers = {'Content-Type': 'application/soap+xml; charset="ascii"'}
-            self.client = Client(self.url, headers=headers, plugins=[NamespaceAndResponseCorrectionPlugin()])
+            self.client = Client(self.url, headers=headers, plugins=[CorrectionPlugin()])
         except WebFault:
             print('Failed to create a new instance of the SUDS, '
                   'check the settings are correct, ip address, etc.')
@@ -264,20 +264,6 @@ class CMDBuild:
                       filter_sq_operator=None, order_type=None, limit=None,
                       offset=None, full_text_query=None, cql_query=None,
                       cql_query_parameters=None):
-        """
-        Get cards from CDMBuild
-        :param classname: string
-        :param attributes_list: list
-        :param _filter: dict
-        :param filter_sq_operator:
-        :param order_type:
-        :param limit:
-        :param offset:
-        :param full_text_query:
-        :param cql_query:
-        :param cql_query_parameters:
-        :return: dict
-        """
         attributes = []
         query = self.client.factory.create('ns0:query')
         if attributes_list:
@@ -466,16 +452,66 @@ class CMDBuild:
         result = self.client.service.getLookupList(lookup_type, value, parent_list)
         return result
 
+    def get_lookup_list_by_code(self, lookup_type, lookup_code, parent_list):
+        result = self.client.service.getLookupListByCode(lookup_type, lookup_code, parent_list)
+        return result
+
     def get_lookup_by_id(self, lookup_id):
         result = self.client.service.getLookupById(lookup_id)
         return result
 
-    def create_relation(self):
-        result = self.client.service.createRelation()
+    def create_relation(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+        relation = self.client.factory.create('ns0:relation')
+        relation.domainName = domain_name
+        relation.class1Name = class_1_name
+        relation.card1Id = card_1_id
+        relation.class2Name = class_2_name
+        relation.card2Id = card_2_id
+        relation.status = status or 'A'
+        relation.beginDate = begin_date
+        relation.endDate = end_date
+        result = self.client.service.createRelation(relation)
         return result
 
-    def delete_relation(self):
-        result = self.client.service.deleteRelation()
+    def create_relation_with_attributes(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date, attributes_list):
+        relation = self.client.factory.create('ns0:relation')
+        relation.domainName = domain_name
+        relation.class1Name = class_1_name
+        relation.card1Id = card_1_id
+        relation.class2Name = class_2_name
+        relation.card2Id = card_2_id
+        relation.status = status or 'A'
+        relation.beginDate = begin_date
+        relation.endDate = end_date
+        attributes = []
+        attributeList = self.client.factory.create('ns0:attributeList')
+        if attributes_list:
+            if isinstance(attributes_list, list):
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attributeList.name = k
+                        attributeList.value = _v
+                    attributes.append(attributeList)
+            else:
+                for k, _v in attributes_list.items():
+                    attributeList.name = k
+                    attributeList.value = _v
+                attributes.append(attributeList)
+            relation.attributeList = attributes
+        result = self.client.service.createRelationWithAttributes(relation)
+        return result
+
+    def delete_relation(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+        relation = self.client.factory.create('ns0:relation')
+        relation.domainName = domain_name
+        relation.class1Name = class_1_name
+        relation.card1Id = card_1_id
+        relation.class2Name = class_2_name
+        relation.card2Id = card_2_id
+        relation.status = status or 'A'
+        relation.beginDate = begin_date
+        relation.endDate = end_date
+        result = self.client.service.deleteRelation(relation)
         return result
 
     def get_relation_list(self, domain, classname, card_id):
@@ -483,32 +519,152 @@ class CMDBuild:
             domain=domain, className=classname, cardId=card_id)
         return result
 
-    def get_relation_history(self):
-        result = self.client.service.getRelationHistory()
+    def get_relation_list_ext(self, domain, classname, card_id):
+        result = self.client.service.getRelationListExt(
+            domain=domain, className=classname, cardId=card_id)
         return result
 
-    def start_workflow(self):
-        result = self.client.service.startWorkflow()
+    def get_relation_history(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+        relation = self.client.factory.create('ns0:relation')
+        relation.domainName = domain_name
+        relation.class1Name = class_1_name
+        relation.card1Id = card_1_id
+        relation.class2Name = class_2_name
+        relation.card2Id = card_2_id
+        relation.status = status or 'A'
+        relation.beginDate = begin_date
+        relation.endDate = end_date
+        result = self.client.service.getRelationHistory(relation)
         return result
 
-    def update_workflow(self):
-        result = self.client.service.updateWorkflow()
+    def get_relation_attributes(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+        relation = self.client.factory.create('ns0:relation')
+        relation.domainName = domain_name
+        relation.class1Name = class_1_name
+        relation.card1Id = card_1_id
+        relation.class2Name = class_2_name
+        relation.card2Id = card_2_id
+        relation.status = status or 'A'
+        relation.beginDate = begin_date
+        relation.endDate = end_date
+        result = self.client.service.getRelationHistory(relation)
         return result
 
-    def upload_attachment(self):
-        result = self.client.service.uploadAttachment()
+    def start_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
+        card = self.client.factory.create('ns0:card')
+        card.className = class_name
+        if card_id:
+            card.Id = card_id
+        attributes = []
+        attributeList = self.client.factory.create('ns0:attributeList')
+        if attributes_list:
+            if isinstance(attributes_list, list):
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attributeList.name = k
+                        attributeList.value = _v
+                    attributes.append(attributeList)
+            else:
+                for k, _v in attributes_list.items():
+                    attributeList.name = k
+                    attributeList.value = _v
+                attributes.append(attributeList)
+            card.attributeList = attributes
+        if begin_date:
+            card.beginDate = begin_date
+        if user:
+            card.user = user
+        result = self.client.service.startWorkflow(card, complete_task)
         return result
 
-    def download_attachment(self):
-        result = self.client.service.downloadAttachment()
+    def update_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
+        card = self.client.factory.create('ns0:card')
+        card.className = class_name
+        if card_id:
+            card.Id = card_id
+        attributes = []
+        attributeList = self.client.factory.create('ns0:attributeList')
+        if attributes_list:
+            if isinstance(attributes_list, list):
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attributeList.name = k
+                        attributeList.value = _v
+                    attributes.append(attributeList)
+            else:
+                for k, _v in attributes_list.items():
+                    attributeList.name = k
+                    attributeList.value = _v
+                attributes.append(attributeList)
+            card.attributeList = attributes
+        if begin_date:
+            card.beginDate = begin_date
+        if user:
+            card.user = user
+        result = self.client.service.updateWorkflow(card, complete_task)
         return result
 
-    def delete_attachment(self):
-        result = self.client.service.deleteAttachment()
+    def resume_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
+        card = self.client.factory.create('ns0:card')
+        card.className = class_name
+        if card_id:
+            card.Id = card_id
+        attributes = []
+        attributeList = self.client.factory.create('ns0:attributeList')
+        if attributes_list:
+            if isinstance(attributes_list, list):
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attributeList.name = k
+                        attributeList.value = _v
+                    attributes.append(attributeList)
+            else:
+                for k, _v in attributes_list.items():
+                    attributeList.name = k
+                    attributeList.value = _v
+                attributes.append(attributeList)
+            card.attributeList = attributes
+        if begin_date:
+            card.beginDate = begin_date
+        if user:
+            card.user = user
+        result = self.client.service.resumeWorkflow(card, complete_task)
         return result
 
-    def update_attachment(self):
-        result = self.client.service.updateAttachment()
+    def get_reference(self, classname, query, order_type, limit, offset, full_text_query):
+        result = self.client.service.getReference(classname, query, order_type, limit, offset, full_text_query)
+        return result
+
+    def get_attachment_list(self, classname, card_id=None):
+        result = self.client.service.getAttachmentList(classname, card_id)
+        return result
+
+    def upload_attachment(self, class_name, object_id, _file, filename, category, description):
+        result = self.client.service.uploadAttachment(class_name, object_id, _file, filename, category, description)
+        return result
+
+    def download_attachment(self, classname, object_id, filename):
+        result = self.client.service.downloadAttachment(classname, object_id, filename)
+        return result
+
+    def delete_attachment(self, classname, card_id, filename):
+        result = self.client.service.deleteAttachment(classname, card_id, filename)
+        return result
+
+    def update_attachment_description(self, classname, card_id, filename, description):
+        result = self.client.service.updateAttachmentDescription(classname, card_id, filename, description)
+        return result
+
+    def get_activity_menu_schema(self):
+        result = self.client.service.getActivityMenuSchema()
+        return result
+
+    def get_activity_objects(self, classname, card_id):
+        result = self.client.service.getActivityObjects(classname, card_id)
+        return result
+
+    def get_attribute_list(self, classname):
+        result = self.client.service.getAttributeList(classname)
         return result
 
     def get_menu_schema(self):
@@ -517,4 +673,8 @@ class CMDBuild:
 
     def get_card_menu_schema(self):
         result = self.client.service.getCardMenuSchema()
+        return result
+
+    def get_process_help(self, classname, card_id):
+        result = self.client.service.getProcessHelp(classname, card_id)
         return result
