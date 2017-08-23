@@ -16,7 +16,8 @@ __version__ = "1.0"
 __email__ = "alex-m.a.k@yandex.kz"
 __status__ = "Production"
 
-# todo: часть аргументов необходимо переписать в соответствии с документацией
+# todo: need to refactor code and eliminate repetition
+# todo: need to add skipped tests and check in errors
 
 
 def decode(t):
@@ -75,7 +76,11 @@ def decode(t):
                 print('Cards classname: \'{0}\' with filter: {1}, total rows: \'{2}\' - obtained'
                       .format(args[1], kwargs['_filter'], total_rows))
             else:
-                print('Cards classname: \'{0}\', total_rows: \'{1}\' - obtained'.format(args[1], total_rows))
+                if 'classname' in kwargs:
+                    classname = kwargs['classname']
+                else:
+                    classname = args[1]
+                print('Cards classname: \'{0}\', total_rows: \'{1}\' - obtained'.format(classname, total_rows))
 
         def _do_create(attributes, _id, _outtab):
             for j, attribute in enumerate(attributes):
@@ -196,14 +201,7 @@ class CMDBuild:
             self.client = Client(self.url, headers=headers, plugins=[CorrectionPlugin()])
         except WebFault:
             print('Failed to create a new instance of the SUDS, '
-                  'check the settings are correct, ip address, etc.')
-            import requests
-            try:
-                resp = requests.get(self.url)
-                if resp.status_code:
-                    print("Oops! URL address: {}  is not available".format(self.url))
-            except requests.ConnectionError:
-                print("Oops! URL address: {}  is not available".format(self.url))
+                  'check the settings are correct, URL, etc.')
             sys.exit(-1)
 
         security = Security()
@@ -260,18 +258,25 @@ class CMDBuild:
             sys.exit()
         return result
 
-    @decode
     def get_card_list(self, classname, attributes_list=None, _filter=None,
                       filter_sq_operator=None, order_type=None, limit=None,
                       offset=None, full_text_query=None, cql_query=None,
                       cql_query_parameters=None):
         attributes = []
         query = self.client.factory.create('ns0:query')
+        attribute = self.client.factory.create('ns0:attribute')
         if attributes_list:
-            attribute = self.client.factory.create('ns0:attribute')
-            for i, item in enumerate(attributes_list):
-                attribute.name = attributes_list[i]
-            attributes.append(attribute)
+            if isinstance(attributes_list, list):
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
+            else:
+                for k, _v in attributes_list.items():
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
 
         if _filter or filter_sq_operator:
             if _filter and not filter_sq_operator:

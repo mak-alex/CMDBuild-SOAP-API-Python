@@ -1,4 +1,3 @@
-import json
 import unittest
 from cmdbuild import CMDBuild as cmdbuild
 t = cmdbuild(
@@ -8,18 +7,43 @@ t = cmdbuild(
     verbose=False,
     debug=False
 )
+# this tests for model Ltd. Kazniie Innovation
+# if you want to run this test, please rename the 'classname' for all methods
 
 
 class Test_CMDBuild_SOAP_API_Methods(unittest.TestCase):
-    def test_create_new_instance_cmdbuild(self,):
-        self.assertIsNotNone(t)
+    def test_1_create_card(self,):
+        self.assertIsNotNone(t.create_card('AddressesIPv4', {
+            'Address': '192.192.192.192/24'}))
+
+    def test_2_update_card(self,):
+        card = t.get_card_list('AddressesIPv4', None, {
+            'name': 'Address',
+            'operator': 'EQUALS',
+            'value': '192.192.192.192/24'
+        })
+        self.assertIsNotNone(
+            t.update_card(
+                'AddressesIPv4',
+                card['cards'][0]['id'],
+                {'Address': '192.192.192.192/24'}
+            )
+        )
+
+    def test_3_delete_card(self,):
+        card = t.get_card_list('AddressesIPv4', None, {
+            'name': 'Address',
+            'operator': 'EQUALS',
+            'value': '192.192.192.192/24'
+        })
+        self.assertIsNotNone(t.delete_card('AddressesIPv4',
+                                           card['cards'][0]['id']))
 
     def test_get_reference(self,):
         self.assertIsNotNone(t.get_reference(classname='Hosts'))
 
     def test_get_card_list(self,):
-        cards = t.get_card_list(classname='Hosts')
-        self.assertIsNotNone(cards)
+        self.assertIsNotNone(t.get_card_list(classname='Hosts'))
 
     def test_get_relation_list(self,):
         self.assertIsNotNone(t.get_relation_list(classname='Hosts'))
@@ -47,6 +71,4 @@ class Test_CMDBuild_SOAP_API_Methods(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
-
-
+    unittest.main(verbosity=2)
