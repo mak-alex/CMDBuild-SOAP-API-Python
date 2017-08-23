@@ -123,42 +123,41 @@ class CMDBuild:
         self.client.set_options(wsse=security)
 
     def get_card(self, classname, card_id, attributes_list=None):
-        """
-        Get card
-        :param classname:
-        :param card_id:
-        :param attributes_list:
-        :return: dict
-        """
-        attribute_list = []
+        attributes = []
         if attributes_list:
             attribute = self.client.factory.create('ns0:attribute')
-            for i, item in enumerate(attributes_list):
-                attribute.name = attributes_list[i]
-            attribute_list.append(attribute)
+            if isinstance(attributes_list, list):
+                for attribute in attributes_list:
+                    for k, _v in attribute.items():
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
+            else:
+                for k, _v in attributes_list.items():
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
         try:
-            result = self.client.service.getCard(className=classname, cardId=card_id, attributeList=attributes_list)
+            result = self.client.service.getCard(
+                className=classname, cardId=card_id,
+                attributeList=attributes_list)
         except WebFault:
-            print('Failed to get card for classname: {0}, id: {1}'.format(classname, card_id))
+            print('Failed to get card for classname: {0}, id: {1}'
+                  .format(classname, card_id))
             sys.exit()
         return result
 
     def get_card_history(self, classname, card_id, limit=None, offset=None):
-        """
-        Get card history
-        :param classname:
-        :param card_id:
-        :param limit:
-        :param offset:
-        :return: dict
-        """
         try:
-            result = self.client.service.getCardHistory(className=classname, cardId=card_id, limit=limit, offset=offset)
+            result = self.client.service.getCardHistory(
+                className=classname, cardId=card_id,
+                limit=limit, offset=offset)
             if result:
                 if result[0] == 0:
                     sys.exit()
         except WebFault:
-            print('Failed to get history card for classname: \'{0}\', id: \'{1}\''.format(classname, card_id))
+            print('Failed to get history card for classname: \'{0}\','
+                  'id: \'{1}\''.format(classname, card_id))
             sys.exit()
         return result
 
@@ -168,8 +167,9 @@ class CMDBuild:
                       cql_query_parameters=None):
         attributes = []
         query = self.client.factory.create('ns0:query')
-        attribute = self.client.factory.create('ns0:attribute')
+
         if attributes_list:
+            attribute = self.client.factory.create('ns0:attribute')
             if isinstance(attributes_list, list):
                 for attribute in attributes_list:
                     for k, _v in attribute.items():
@@ -202,9 +202,12 @@ class CMDBuild:
             query.cqlQuery.parameters = cql_query_parameters
 
         try:
-            result = self.client.service.getCardList(className=classname, attributeList=attributes, queryType=query)
+            result = self.client.service.getCardList(
+                className=classname, attributeList=attributes,
+                queryType=query)
             if not result[0]:
-                print('Failed to get cards for classname: {0}, total rows: {1}'.format(classname, result[0]))
+                print('Failed to get cards for classname: {0},'
+                      'total rows: {1}'.format(classname, result[0]))
                 sys.exit()
         except WebFault:
             print('Failed to get cards for classname: {}'.format(classname))
@@ -213,45 +216,35 @@ class CMDBuild:
         return result
 
     def delete_card(self, classname, card_id):
-        """
-
-        :param classname:
-        :param card_id:
-        :return: boolean
-        """
         try:
-            result = self.client.service.deleteCard(className=classname, cardId=card_id)
+            result = self.client.service.deleteCard(
+                className=classname, cardId=card_id)
             if self.verbose:
-                print('Card classname: \'{0}\', id: \'{1}\' - removed'.format(classname, card_id))
+                print('Card classname: \'{0}\','
+                      'id: \'{1}\' - removed'.format(classname, card_id))
         except WebFault:
-            print('Can\'t delete a card, class name: \'{0}\', ID: \'{1}\''.format(classname, card_id))
+            print('Can\'t delete a card, class name: \'{0}\','
+                  'ID: \'{1}\''.format(classname, card_id))
             sys.exit()
         return result
 
     def create_card(self, classname, attributes_list, metadata=None):
-        """
-
-        :param classname:
-        :param attributes_list:
-        :param metadata:
-        :return: int
-        """
         cardType = self.client.factory.create('ns0:cardType')
         cardType.className = classname
         attributes = []
-        attributeList = self.client.factory.create('ns0:attributeList')
         if attributes_list:
+            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
                 for attribute in attributes_list:
                     for k, _v in attribute.items():
-                        attributeList.name = k
-                        attributeList.value = _v
-                    attributes.append(attributeList)
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
             else:
                 for k, _v in attributes_list.items():
-                    attributeList.name = k
-                    attributeList.value = _v
-                attributes.append(attributeList)
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
             cardType.attributeList = attributes
 
         if metadata:
@@ -262,71 +255,75 @@ class CMDBuild:
             result = self.client.service.createCard(cardType)
             if result:
                 if self.verbose:
-                    print('Card classname: \'{0}\', id: \'{1}\' with: {2} - created'
+                    print('Card classname: \'{0}\','
+                          'id: \'{1}\' with: {2} - created'
                           .format(classname, result, attributes_list))
         except WebFault:
             if self.verbose:
-                print('Don\'t create card classname: \'{0}\' with: {1},  maybe exists'.format(classname, attributes_list))
+                print('Don\'t create card classname: \'{0}\''
+                      'with: {1},  maybe exists'
+                      .format(classname, attributes_list))
 
         return result
 
-    def update_card(self, classname, card_id, attributes_list, metadata=None, begin_date=None):
-        """
-
-        :param classname:
-        :param card_id:
-        :param attributes_list:
-        :param metadata:
-        :param begin_date:
-        :return: boolean
-        """
-        cardType = self.client.factory.create('ns0:card')
-        cardType.className = classname
-        cardType.id = card_id
-        cardType.beginDate = begin_date
+    def update_card(self, classname, card_id, attributes_list,
+                    metadata=None, begin_date=None):
+        card = self.client.factory.create('ns0:card')
+        card.className = classname
+        card.id = card_id
+        card.beginDate = begin_date
         attributes = []
-        attributeList = self.client.factory.create('ns0:attributeList')
+
         if attributes_list:
+            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
                 for attribute in attributes_list:
                     for k, _v in attribute.items():
-                        attributeList.name = k
-                        attributeList.value = _v
-                    attributes.append(attributeList)
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
             else:
                 for k, _v in attributes_list.items():
-                    attributeList.name = k
-                    attributeList.value = _v
-                attributes.append(attributeList)
-            cardType.attributeList = attributes
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
+            card.attributeList = attributes
 
         if metadata:
-            cardType.metadata = metadata
+            card.metadata = metadata
 
         try:
-            result = self.client.service.updateCard(cardType)
+            result = self.client.service.updateCard(card)
             if result:
                 if self.verbose:
-                    print('Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - updated'
+                    print('Card classname: \'{0}\','
+                          'id: \'{1}\' with attributes: \'{2}\' - updated'
                           .format(classname, card_id, attributes))
         except WebFault:
             if self.verbose:
-                print('Card classname: \'{0}\', id: \'{1}\' with attributes: \'{2}\' - can\'t be updated'
+                print('Card classname: \'{0}\','
+                      'id: \'{1}\' with attributes: \'{2}\'- can\'t be updated'
                       .format(classname, card_id, attributes))
             sys.exit()
         return result
 
-    def create_lookup(self, lookup_type, code, description, lookup_id=None, notes=None, parent_id=None, position=None):
+    def create_lookup(self, lookup_type, code, description,
+                      lookup_id=None, notes=None, parent_id=None,
+                      position=None):
         lookup = self.client.factory.create('ns0:lookup')
         lookup.code = code
         lookup.description = description
+
         if lookup_id:
             lookup.id = lookup_id
+
         if notes:
             lookup.notes = notes
+
         if parent_id and position:
             lookup.parentId = parent_id
             lookup.position = position
+
         lookup.type = lookup_type
         try:
             result = self.client.service.createLookup(lookup)
@@ -343,17 +340,23 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def update_lookup(self, lookup_type, code, description, lookup_id=None, notes=None, parent_id=None, position=None):
+    def update_lookup(self, lookup_type, code, description,
+                      lookup_id=None, notes=None, parent_id=None,
+                      position=None):
         lookup = self.client.factory.create('ns0:lookup')
         lookup.code = code
         lookup.description = description
+
         if lookup_id:
             lookup.id = lookup_id
+
         if notes:
             lookup.notes = notes
+
         if parent_id and position:
             lookup.parentId = parent_id
             lookup.position = position
+
         lookup.type = lookup_type
         try:
             result = self.client.service.updateLookup(lookup)
@@ -363,12 +366,20 @@ class CMDBuild:
         return result
 
     def get_lookup_list(self, lookup_type=None, value=None, parent_list=False):
-        result = self.client.service.getLookupList(lookup_type, value, parent_list)
+        try:
+            result = self.client.service.getLookupList(
+                lookup_type, value, parent_list)
+        except WebFault as e:
+            print(e)
+            sys.exit()
+
         return result
 
-    def get_lookup_list_by_code(self, lookup_type, lookup_code, parent_list=False):
+    def get_lookup_list_by_code(self, lookup_type, lookup_code,
+                                parent_list=False):
         try:
-            result = self.client.service.getLookupListByCode(lookup_type, lookup_code, parent_list)
+            result = self.client.service.getLookupListByCode(
+                lookup_type, lookup_code, parent_list)
         except WebFault as e:
             print(e)
             sys.exit()
@@ -382,7 +393,9 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def create_relation(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+    def create_relation(self, domain_name, class_1_name, card_1_id,
+                        class_2_name, card_2_id, status, begin_date,
+                        end_date):
         relation = self.client.factory.create('ns0:relation')
         relation.domainName = domain_name
         relation.class1Name = class_1_name
@@ -399,7 +412,10 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def create_relation_with_attributes(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date, attributes_list):
+    def create_relation_with_attributes(self, domain_name, class_1_name,
+                                        card_1_id, class_2_name, card_2_id,
+                                        status, begin_date, end_date,
+                                        attributes_list):
         relation = self.client.factory.create('ns0:relation')
         relation.domainName = domain_name
         relation.class1Name = class_1_name
@@ -409,20 +425,21 @@ class CMDBuild:
         relation.status = status or 'A'
         relation.beginDate = begin_date
         relation.endDate = end_date
+
         attributes = []
-        attributeList = self.client.factory.create('ns0:attributeList')
         if attributes_list:
+            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
                 for attribute in attributes_list:
                     for k, _v in attribute.items():
-                        attributeList.name = k
-                        attributeList.value = _v
-                    attributes.append(attributeList)
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
             else:
                 for k, _v in attributes_list.items():
-                    attributeList.name = k
-                    attributeList.value = _v
-                attributes.append(attributeList)
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
             relation.attributeList = attributes
         try:
             result = self.client.service.createRelationWithAttributes(relation)
@@ -431,7 +448,9 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def delete_relation(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+    def delete_relation(self, domain_name, class_1_name, card_1_id,
+                        class_2_name, card_2_id, status, begin_date,
+                        end_date):
         relation = self.client.factory.create('ns0:relation')
         relation.domainName = domain_name
         relation.class1Name = class_1_name
@@ -483,7 +502,9 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def get_relation_attributes(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+    def get_relation_attributes(self, domain_name, class_1_name, card_1_id,
+                                class_2_name, card_2_id, status, begin_date,
+                                end_date):
         relation = self.client.factory.create('ns0:relation')
         relation.domainName = domain_name
         relation.class1Name = class_1_name
@@ -500,61 +521,74 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def start_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
+    def start_workflow(self, classname, card_id, attributes_list,
+                       begin_date, user, complete_task):
         card = self.client.factory.create('ns0:card')
-        card.className = class_name
+        card.className = classname
+
         if card_id:
             card.Id = card_id
+
         attributes = []
-        attributeList = self.client.factory.create('ns0:attributeList')
         if attributes_list:
+            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
                 for attribute in attributes_list:
                     for k, _v in attribute.items():
-                        attributeList.name = k
-                        attributeList.value = _v
-                    attributes.append(attributeList)
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
             else:
                 for k, _v in attributes_list.items():
-                    attributeList.name = k
-                    attributeList.value = _v
-                attributes.append(attributeList)
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
             card.attributeList = attributes
+
         if begin_date:
             card.beginDate = begin_date
+
         if user:
             card.user = user
+
         try:
             result = self.client.service.startWorkflow(card, complete_task)
         except WebFault as e:
             print(e)
             sys.exit()
+
         return result
 
-    def update_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
+    def update_workflow(self, class_name, card_id, attributes_list,
+                        begin_date, user, complete_task):
         card = self.client.factory.create('ns0:card')
         card.className = class_name
+
         if card_id:
             card.Id = card_id
+
         attributes = []
-        attributeList = self.client.factory.create('ns0:attributeList')
         if attributes_list:
+            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
                 for attribute in attributes_list:
                     for k, _v in attribute.items():
-                        attributeList.name = k
-                        attributeList.value = _v
-                    attributes.append(attributeList)
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
             else:
                 for k, _v in attributes_list.items():
-                    attributeList.name = k
-                    attributeList.value = _v
-                attributes.append(attributeList)
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
             card.attributeList = attributes
+
         if begin_date:
             card.beginDate = begin_date
+
         if user:
             card.user = user
+
         try:
             result = self.client.service.updateWorkflow(card, complete_task)
         except WebFault as e:
@@ -562,30 +596,36 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def resume_workflow(self, class_name, card_id, attributes_list, begin_date, user, complete_task):
+    def resume_workflow(self, class_name, card_id, attributes_list,
+                        begin_date, user, complete_task):
         card = self.client.factory.create('ns0:card')
         card.className = class_name
+
         if card_id:
             card.Id = card_id
+
         attributes = []
-        attributeList = self.client.factory.create('ns0:attributeList')
         if attributes_list:
+            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
                 for attribute in attributes_list:
                     for k, _v in attribute.items():
-                        attributeList.name = k
-                        attributeList.value = _v
-                    attributes.append(attributeList)
+                        attribute.name = k
+                        attribute.value = _v
+                    attributes.append(attribute)
             else:
                 for k, _v in attributes_list.items():
-                    attributeList.name = k
-                    attributeList.value = _v
-                attributes.append(attributeList)
+                    attribute.name = k
+                    attribute.value = _v
+                attributes.append(attribute)
             card.attributeList = attributes
+
         if begin_date:
             card.beginDate = begin_date
+
         if user:
             card.user = user
+
         try:
             result = self.client.service.resumeWorkflow(card, complete_task)
         except WebFault as e:
@@ -593,9 +633,11 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def get_reference(self, classname, query=None, order_type=None, limit=None, offset=None, full_text_query=None):
+    def get_reference(self, classname, query=None, order_type=None,
+                      limit=None, offset=None, full_text_query=None):
         try:
-            result = self.client.service.getReference(classname, query, order_type, limit, offset, full_text_query)
+            result = self.client.service.getReference(
+                classname, query, order_type, limit, offset, full_text_query)
         except WebFault as e:
             print(e)
             sys.exit()
@@ -609,9 +651,11 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def upload_attachment(self, class_name, object_id, _file, filename, category, description):
+    def upload_attachment(self, class_name, object_id, _file, filename,
+                          category, description):
         try:
-            result = self.client.service.uploadAttachment(class_name, object_id, _file, filename, category, description)
+            result = self.client.service.uploadAttachment(
+                class_name, object_id, _file, filename, category, description)
         except WebFault as e:
             print(e)
             sys.exit()
@@ -619,7 +663,8 @@ class CMDBuild:
 
     def download_attachment(self, classname, object_id, filename):
         try:
-            result = self.client.service.downloadAttachment(classname, object_id, filename)
+            result = self.client.service.downloadAttachment(
+                classname, object_id, filename)
         except WebFault as e:
             print(e)
             sys.exit()
@@ -627,15 +672,18 @@ class CMDBuild:
 
     def delete_attachment(self, classname, card_id, filename):
         try:
-            result = self.client.service.deleteAttachment(classname, card_id, filename)
+            result = self.client.service.deleteAttachment(
+                classname, card_id, filename)
         except WebFault as e:
             print(e)
             sys.exit()
         return result
 
-    def update_attachment_description(self, classname, card_id, filename, description):
+    def update_attachment_description(self, classname, card_id,
+                                      filename, description):
         try:
-            result = self.client.service.updateAttachmentDescription(classname, card_id, filename, description)
+            result = self.client.service.updateAttachmentDescription(
+                classname, card_id, filename, description)
         except WebFault as e:
             print(e)
             sys.exit()
