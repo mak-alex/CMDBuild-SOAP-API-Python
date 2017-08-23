@@ -18,109 +18,7 @@ __status__ = "Production"
 
 # todo: need to refactor code and eliminate repetition
 # todo: need to add skipped tests and check in errors
-
-
-def decode(t):
-    def wrapped(*args, **kwargs):
-        def _to_dict(obj, key_to_lower=False, json_serialize=False):
-            """
-                Decode SOAP message to JSON Dict
-            """
-
-            if not hasattr(obj, '__keylist__'):
-                if json_serialize \
-                    and isinstance(obj,
-                        (datetime.datetime, datetime.time, datetime.date)):
-                    return obj.isoformat()
-                else:
-                    return obj
-
-            data = {}
-            fields = obj.__keylist__
-            for i, field in enumerate(fields):
-                val = getattr(obj, field)
-                if key_to_lower:
-                    field = field.lower()
-                if isinstance(val, list):
-                    data[field] = []
-                    for item in val:
-                        data[field].append(
-                            _to_dict(item, json_serialize=json_serialize))
-                else:
-                    data[field] = _to_dict(val, json_serialize=json_serialize)
-            return data
-
-        outtab = {'Id': {}}
-        cards = _to_dict(
-            t(*args, **kwargs), key_to_lower=False, json_serialize=True)
-
-        if not cards:
-            return
-
-        def total_rows(l):
-            """
-            :param l: dict
-            :return: int
-            """
-            if l:
-                if 'totalRows' in l:
-                    if isinstance(l['totalRows'], int):
-                        return l['totalRows']
-                return 1
-            else:
-                return 0
-
-        total_rows = total_rows(cards)
-        if args[0].__class__.verbose:
-            if '_filter' in kwargs:
-                print('Cards classname: \'{0}\' with filter: {1}, total rows: \'{2}\' - obtained'
-                      .format(args[1], kwargs['_filter'], total_rows))
-            else:
-                if 'classname' in kwargs:
-                    classname = kwargs['classname']
-                else:
-                    classname = args[1]
-                print('Cards classname: \'{0}\', total_rows: \'{1}\' - obtained'.format(classname, total_rows))
-
-        def _do_create(attributes, _id, _outtab):
-            for j, attribute in enumerate(attributes):
-                if isinstance(attribute, dict):
-                    code = None
-                    if len(attribute) > 2:
-                        code = attribute['code'] or ""
-                    key = attribute['name']
-                    value = attribute['value'] or ""
-                    if key:
-                        if not code and value:
-                            _outtab['Id'][_id][key] = value
-                        else:
-                            if value:
-                                _outtab['Id'][_id][key] = {"value": value, "code": code}
-            return _outtab
-
-        if total_rows >= 2:
-            if isinstance(cards, int):
-                outtab['Id'] = {cards: {}}
-            else:
-                if cards['cards']:
-                    cards = cards['cards']
-                else:
-                    cards = cards['card']
-
-                for card in cards:
-                    mid = card['id']
-                    outtab['Id'][mid] = {}
-                    _do_create(card['attributeList'], mid, outtab)
-        else:
-            if 'cards' in cards:
-                cards = cards['cards'][0]
-            oid = cards['id']
-            outtab['Id'][oid] = {}
-            _do_create(cards['attributeList'], oid, outtab)
-
-        return outtab
-
-    return wrapped
+# todo: need add description for all methods
 
 
 class CorrectionPlugin(MessagePlugin):
@@ -130,7 +28,8 @@ class CorrectionPlugin(MessagePlugin):
     def received(self, context):
         env = "<soap:Envelope.+</soap:Envelope>"
         if sys.version_info[:2] >= (2, 7):
-            reply_new = re.findall(env, context.reply.decode('utf-8'), re.DOTALL)[0]
+            reply_new = re.findall(env, context.reply.decode('utf-8'),
+                                   re.DOTALL)[0]
         else:
             reply_new = re.findall(env, context.reply, re.DOTALL)[0]
         context.reply = reply_new
@@ -156,6 +55,9 @@ class CMDBuild:
     CMDBuild is compliant with ITIL "best practices" for
     the IT services management according to process-oriented criteria
 
+    Dependencies:
+        suds (latest version)
+
     Args:
         username (string)
         password (string)
@@ -164,12 +66,16 @@ class CMDBuild:
         debug (bool)
 
     Usage:
+        from cmdbuild import CMDBuild as cmdbuild
         cmdbuild = CMDBuild(
             username='admin',
             password='3$rFvCdE',
             url='http://*/Webservices?wsdl'
         )
-        print(json.dumps(cmdbuild.get_card_list('Hosts'), indent=2))
+        #  if, at the time of creating the instance
+        # is not specified the username/password,
+        # use the method cmdbuild.auth('admin', '3$rFvCdE')
+        print(cmdbuild.get_card_list('Hosts'), indent=2)
     """
 
     def __init__(self, username=None, password=None, url=None, verbose=False, debug=False):
@@ -216,7 +122,6 @@ class CMDBuild:
             sys.exit(-1)
         self.client.set_options(wsse=security)
 
-    @decode
     def get_card(self, classname, card_id, attributes_list=None):
         """
         Get card
@@ -238,7 +143,6 @@ class CMDBuild:
             sys.exit()
         return result
 
-    @decode
     def get_card_history(self, classname, card_id, limit=None, offset=None):
         """
         Get card history
