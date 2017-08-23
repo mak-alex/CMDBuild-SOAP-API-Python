@@ -9,7 +9,6 @@ CMDBuild is compliant with ITIL "best practices" for the IT services management 
    
 ###Dependencies
  - suds
- - requests
    
 ###Install
 	easy_install cmdbuild-soap-api
@@ -58,7 +57,6 @@ CMDBuild is compliant with ITIL "best practices" for the IT services management 
 
 ###Usage
 ```python
-import json
 from cmdbuild import CMDBuild as cmdbuild
 
 t = cmdbuild(
@@ -70,9 +68,9 @@ t = cmdbuild(
 )
 
 hosts = t.get_card_list('Hosts')
-print(json.dumps(hosts, indent=2, ensure_ascii=False, sort_keys=False))
+print(hosts)
 # one_item = t.get_card('zItems', 1391866)
-# print(json.dumps(one_item, indent=2, ensure_ascii=False, sort_keys=False))
+# print(one_item)
 # lookups = t.get_lookup_list('LOC_TYPE')
 # for lookup in lookups:
 #    print(t.get_lookup_by_id(lookup['id']))

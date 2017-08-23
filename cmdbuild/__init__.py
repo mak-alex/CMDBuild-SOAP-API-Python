@@ -12,7 +12,7 @@ from suds import WebFault
 __author__ = "Alexandr Mikhailenko a.k.a Alex M.A.K."
 __copyright__ = "Copyright 2017, Ltd Kazniie Innovation"
 __license__ = "MIT"
-__version__ = "1.0"
+__version__ = "1.0.1"
 __email__ = "alex-m.a.k@yandex.kz"
 __status__ = "Production"
 
@@ -62,7 +62,6 @@ class CMDBuild:
         username (string)
         password (string)
         ip (string)
-        verbose (bool)
         debug (bool)
 
     Usage:
@@ -78,13 +77,11 @@ class CMDBuild:
         print(cmdbuild.get_card_list('Hosts'), indent=2)
     """
 
-    def __init__(self, username=None, password=None, url=None, verbose=False, debug=False):
+    def __init__(self, username=None, password=None, url=None, debug=False):
         self.url = url
         self.client = None
         self.username = username
         self.password = password
-        self.verbose = verbose
-        self.__class__.verbose = self.verbose
 
         if self.username and self.password:
             self.auth(self.username, self.password)
@@ -99,12 +96,12 @@ class CMDBuild:
                 self.username = username
                 self.password = password
             else:
-                if self.verbose:
-                    print('`username\' and/or `password\' can\'t be empty')
+                print('`username\' and/or `password\' can\'t be empty')
                 sys.exit(-1)
         try:
             headers = {'Content-Type': 'application/soap+xml; charset="ascii"'}
-            self.client = Client(self.url, headers=headers, plugins=[CorrectionPlugin()])
+            self.client = Client(self.url, headers=headers,
+                                 plugins=[CorrectionPlugin()])
         except WebFault:
             print('Failed to create a new instance of the SUDS, '
                   'check the settings are correct, URL, etc.')
@@ -118,7 +115,9 @@ class CMDBuild:
                 token = UsernameToken(self.username, self.password)
             security.tokens.append(token)
         except WebFault:
-            print('Failed to create token, args: username={0}, password={1}'.format(self.username, self.password))
+            print('Failed to create token, args: '
+                  'username={0}, password={1}'
+                  .format(self.username, self.password))
             sys.exit(-1)
         self.client.set_options(wsse=security)
 
@@ -141,9 +140,8 @@ class CMDBuild:
             result = self.client.service.getCard(
                 className=classname, cardId=card_id,
                 attributeList=attributes_list)
-        except WebFault:
-            print('Failed to get card for classname: {0}, id: {1}'
-                  .format(classname, card_id))
+        except WebFault as e:
+            print(e)
             sys.exit()
         return result
 
@@ -155,9 +153,8 @@ class CMDBuild:
             if result:
                 if result[0] == 0:
                     sys.exit()
-        except WebFault:
-            print('Failed to get history card for classname: \'{0}\','
-                  'id: \'{1}\''.format(classname, card_id))
+        except WebFault as e:
+            print(e)
             sys.exit()
         return result
 
@@ -209,8 +206,8 @@ class CMDBuild:
                 print('Failed to get cards for classname: {0},'
                       'total rows: {1}'.format(classname, result[0]))
                 sys.exit()
-        except WebFault:
-            print('Failed to get cards for classname: {}'.format(classname))
+        except WebFault as e:
+            print(e)
             sys.exit()
 
         return result
@@ -219,13 +216,10 @@ class CMDBuild:
         try:
             result = self.client.service.deleteCard(
                 className=classname, cardId=card_id)
-            if self.verbose:
-                print('Card classname: \'{0}\','
-                      'id: \'{1}\' - removed'.format(classname, card_id))
-        except WebFault:
-            print('Can\'t delete a card, class name: \'{0}\','
-                  'ID: \'{1}\''.format(classname, card_id))
+        except WebFault as e:
+            print(e)
             sys.exit()
+
         return result
 
     def create_card(self, classname, attributes_list, metadata=None):
@@ -253,16 +247,9 @@ class CMDBuild:
         result = None
         try:
             result = self.client.service.createCard(cardType)
-            if result:
-                if self.verbose:
-                    print('Card classname: \'{0}\','
-                          'id: \'{1}\' with: {2} - created'
-                          .format(classname, result, attributes_list))
-        except WebFault:
-            if self.verbose:
-                print('Don\'t create card classname: \'{0}\''
-                      'with: {1},  maybe exists'
-                      .format(classname, attributes_list))
+        except WebFault as e:
+            print(e)
+            sys.exit()
 
         return result
 
@@ -294,16 +281,8 @@ class CMDBuild:
 
         try:
             result = self.client.service.updateCard(card)
-            if result:
-                if self.verbose:
-                    print('Card classname: \'{0}\','
-                          'id: \'{1}\' with attributes: \'{2}\' - updated'
-                          .format(classname, card_id, attributes))
-        except WebFault:
-            if self.verbose:
-                print('Card classname: \'{0}\','
-                      'id: \'{1}\' with attributes: \'{2}\'- can\'t be updated'
-                      .format(classname, card_id, attributes))
+        except WebFault as e:
+            print(e)
             sys.exit()
         return result
 
@@ -485,7 +464,9 @@ class CMDBuild:
             sys.exit()
         return result
 
-    def get_relation_history(self, domain_name, class_1_name, card_1_id, class_2_name, card_2_id, status, begin_date, end_date):
+    def get_relation_history(self, domain_name, class_1_name, card_1_id,
+                             class_2_name, card_2_id, status, begin_date,
+                             end_date):
         relation = self.client.factory.create('ns0:relation')
         relation.domainName = domain_name
         relation.class1Name = class_1_name

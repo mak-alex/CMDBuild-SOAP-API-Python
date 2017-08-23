@@ -4,8 +4,7 @@ from cmdbuild import CMDBuild as cmdbuild
 url = 'http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl'
 t = cmdbuild(
     username='admin', password='3$rFvCdE',
-    verbose=False, debug=False,
-    url=url,
+    url=url, debug=False
 )
 # this tests for model Ltd. Kazniie Innovation
 # if you want to run this test, please rename the 'classname' for all methods
