@@ -9,6 +9,13 @@ from suds.plugin import MessagePlugin
 from suds.wsse import UsernameToken, Security
 from suds import WebFault
 
+from base64 import b64encode
+try:
+    from hashlib import sha1,md5
+except:
+    from sha import new as sha1
+    from md5 import md5
+
 __author__ = "Alexandr Mikhailenko a.k.a Alex M.A.K."
 __copyright__ = "Copyright 2017, Ltd Kazniie Innovation"
 __license__ = "MIT"
@@ -19,12 +26,10 @@ __status__ = "Production"
 # todo: need to refactor code and eliminate repetition
 # todo: need to add skipped tests and check in errors
 # todo: need add description for all methods
+# todo: try fixed Server raised fault: 'An error was discovered processing the <wsse:Security> header (An error happened processing a Username Token "A replay attack has been detected")'
 
 
 class CorrectionPlugin(MessagePlugin):
-    def __init__(self):
-        pass
-
     def received(self, context):
         env = "<soap:Envelope.+</soap:Envelope>"
         if sys.version_info[:2] >= (2, 7):
@@ -34,16 +39,83 @@ class CorrectionPlugin(MessagePlugin):
             reply_new = re.findall(env, context.reply, re.DOTALL)[0]
         context.reply = reply_new
 
-    def marshalled(self, context):
-        url = 'http://docs.oasis-open.org/wss/2004/01/'
-        passt = url + 'oasis-200401-wss-username-token-profile-1.0' \
-                    + '#PasswordText'
-        password = context.envelope \
-            .getChild('Header') \
-            .getChild('Security') \
-            .getChild('UsernameToken') \
-            .getChild('Password')
-        password.set('Type', passt)
+
+class UsernamePasswordText(UsernameToken):
+    def __init__(self, username=None, password=None):
+        UsernameToken.__init__(self, username, password)
+
+    def xml(self):
+        usernametoken = UsernameToken.xml(self)
+        password = usernametoken.getChild('Password')
+        nonce = usernametoken.getChild('Nonce')
+        created = usernametoken.getChild('Created')
+        password.set('Type', 'http://docs.oasis-open.org/wss/2004/01/'
+                     'oasis-200401-wss-username-token-profile-1.0'
+                     '#PasswordText')
+
+        return usernametoken
+
+
+# From https://gist.github.com/copitux/5029872
+# Need to send a digest password to CMDBuild, plain text won't work
+class UsernameDigestToken(UsernameToken):
+    """
+    Represents a basic I{UsernameToken} WS-Security token with password digest
+    @ivar username: A username.
+    @type username: str
+    @ivar password: A password.
+    @type password: str
+    @ivar nonce: A set of bytes to prevent reply attacks.
+    @type nonce: str
+    @ivar created: The token created.
+    @type created: L{datetime}
+
+    @doc: http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf
+    """
+
+    def __init__(self, username=None, password=None):
+        UsernameToken.__init__(self, username, password)
+        self.setcreated()
+        self.setnonce()
+
+    def setnonce(self, text=None):
+        """
+        Set I{nonce} which is arbitraty set of bytes to prevent
+        reply attacks.
+        @param text: The nonce text value.
+        Generated when I{None}.
+        @type text: str
+
+        @override: Nonce save binary string to build digest password
+        """
+        if text is None:
+            s = []
+            s.append(self.username)
+            s.append(self.password)
+            s.append(self.sysdate())
+            m = md5()
+            m.update(':'.join(s))
+            self.raw_nonce = m.digest()
+            self.nonce = b64encode(self.raw_nonce)
+        else:
+            self.nonce = text
+
+    def xml(self):
+        usernametoken = UsernameToken.xml(self)
+        password = usernametoken.getChild('Password')
+        nonce = usernametoken.getChild('Nonce')
+        created = usernametoken.getChild('Created')
+        password.set('Type', 'http://docs.oasis-open.org/wss/2004/01/'
+                     'oasis-200401-wss-username-token-profile-1.0'
+                     '#PasswordDigest')
+        s = sha1()
+        s.update(self.raw_nonce)
+        s.update(created.getText())
+        s.update(password.getText())
+        password.setText(b64encode(s.digest()))
+        nonce.set('EncodingType', 'http://docs.oasis-open.org/wss/2004'
+                  '/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary')
+        return usernametoken
 
 
 class CMDBuild:
@@ -77,11 +149,12 @@ class CMDBuild:
         print(cmdbuild.get_card_list('Hosts'), indent=2)
     """
 
-    def __init__(self, username=None, password=None, url=None, debug=False):
+    def __init__(self, username=None, password=None, url=None, use_digest=None, debug=False):
         self.url = url
         self.client = None
         self.username = username
         self.password = password
+        self.use_digest = use_digest
 
         if self.username and self.password:
             self.auth(self.username, self.password)
@@ -112,7 +185,10 @@ class CMDBuild:
         try:
             token = None
             if self.username and self.password:
-                token = UsernameToken(self.username, self.password)
+                if not self.use_digest:
+                    token = UsernamePasswordText(self.username, self.password)
+                else:
+                    token = UsernameDigestToken(self.username, self.password)
             security.tokens.append(token)
         except WebFault:
             print('Failed to create token, args: '
@@ -717,3 +793,8 @@ class CMDBuild:
             print(e)
             sys.exit()
         return result
+
+if __name__ == '__main__':
+    t = CMDBuild(username='admin', password='3$rFvCdE', url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', debug=False, use_digest=True)
+
+    print(t.get_card_list('Hosts'))
