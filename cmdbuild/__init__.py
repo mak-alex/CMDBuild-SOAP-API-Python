@@ -47,8 +47,6 @@ class UsernamePasswordText(UsernameToken):
     def xml(self):
         usernametoken = UsernameToken.xml(self)
         password = usernametoken.getChild('Password')
-        nonce = usernametoken.getChild('Nonce')
-        created = usernametoken.getChild('Created')
         password.set('Type', 'http://docs.oasis-open.org/wss/2004/01/'
                      'oasis-200401-wss-username-token-profile-1.0'
                      '#PasswordText')
