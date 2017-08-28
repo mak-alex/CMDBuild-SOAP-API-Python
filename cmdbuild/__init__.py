@@ -4,6 +4,7 @@ import re
 import sys
 import logging
 import datetime
+from time import sleep
 from suds.client import Client
 from suds.plugin import MessagePlugin
 from suds.wsse import UsernameToken, Security
@@ -179,6 +180,7 @@ class CMDBuild:
             sys.exit(-1)
 
         security = Security()
+        security.mustUnderstand = "False"
 
         try:
             token = None
@@ -238,20 +240,12 @@ class CMDBuild:
                       cql_query_parameters=None):
         attributes = []
         query = self.client.factory.create('ns0:query')
-
         if attributes_list:
-            attribute = self.client.factory.create('ns0:attribute')
             if isinstance(attributes_list, list):
-                for attribute in attributes_list:
-                    for k, _v in attribute.items():
-                        attribute.name = k
-                        attribute.value = _v
+                for attr in attributes_list:
+                    attribute = self.client.factory.create('ns0:attribute')
+                    attribute.name = attr
                     attributes.append(attribute)
-            else:
-                for k, _v in attributes_list.items():
-                    attribute.name = k
-                    attribute.value = _v
-                attributes.append(attribute)
 
         if _filter or filter_sq_operator:
             if _filter and not filter_sq_operator:
@@ -793,6 +787,9 @@ class CMDBuild:
         return result
 
 if __name__ == '__main__':
-    t = CMDBuild(username='admin', password='3$rFvCdE', url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', debug=False, use_digest=True)
-
-    print(t.get_card_list('Hosts'))
+    t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', debug=True)
+    print(t.get_card_list(
+        'Hosts',
+        attributes_list=['Location', 'Description'],
+        _filter={'name':'Id','operator':'EQUALS','value':1392123}
+    ))
