@@ -790,15 +790,10 @@ class CMDBuild:
         return result
 
 if __name__ == '__main__':
-    t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', use_digest=True, debug=True)
-    '''print(t.get_card_list(
-        'Hosts',
-        attributes_list=['Location', 'Description'],
-        )
-    )'''
-    print(t.get_card(
-        'Hosts',
-        1392123,
-        attributes_list=['Description', 'Location', 'host'],
-        )
-    )
+    t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', use_digest=True, debug=False)
+
+    card = t.get_card('Hosts', 1392123, attributes_list=['host'])
+    print(card)
+    attributeList = card['attributeList']
+    for attr in attributeList:
+        print('Response: {} - {}'.format(attr[0], attr[1]))
