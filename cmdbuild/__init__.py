@@ -111,6 +111,7 @@ class UsernameDigestToken(UsernameToken):
         s.update(self.raw_nonce)
         s.update(created.getText())
         s.update(password.getText())
+        print(created.getText())
         password.setText(b64encode(s.digest()))
         nonce.set('EncodingType', 'http://docs.oasis-open.org/wss/2004'
                   '/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary')
@@ -200,22 +201,15 @@ class CMDBuild:
     def get_card(self, classname, card_id, attributes_list=None):
         attributes = []
         if attributes_list:
-            attribute = self.client.factory.create('ns0:attribute')
             if isinstance(attributes_list, list):
-                for attribute in attributes_list:
-                    for k, _v in attribute.items():
-                        attribute.name = k
-                        attribute.value = _v
+                for attr in attributes_list:
+                    attribute = self.client.factory.create('ns0:attributeList')
+                    attribute.name = attr
                     attributes.append(attribute)
-            else:
-                for k, _v in attributes_list.items():
-                    attribute.name = k
-                    attribute.value = _v
-                attributes.append(attribute)
         try:
             result = self.client.service.getCard(
                 className=classname, cardId=card_id,
-                attributeList=attributes_list)
+                attributeList=attributes)
         except WebFault as e:
             print(e)
             sys.exit()
@@ -248,8 +242,17 @@ class CMDBuild:
                     attributes.append(attribute)
 
         if _filter or filter_sq_operator:
-            if _filter and not filter_sq_operator:
+            if _filter:
                 query.filter = _filter
+            if _filter and filter_sq_operator:
+                _filters = []
+                for d in filter_sq_operator:
+                    for r in d:
+                        if isinstance(r, str):
+                            query.filterOperator.operator = r
+                        elif isinstance(r, dict):
+                            _filters.append(r)
+                query.filterOperator.subquery = _filters
 
         if order_type:
             query.orderType = order_type
@@ -787,9 +790,15 @@ class CMDBuild:
         return result
 
 if __name__ == '__main__':
-    t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', debug=True)
-    print(t.get_card_list(
+    t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', use_digest=True, debug=True)
+    '''print(t.get_card_list(
         'Hosts',
         attributes_list=['Location', 'Description'],
-        _filter={'name':'Id','operator':'EQUALS','value':1392123}
-    ))
+        )
+    )'''
+    print(t.get_card(
+        'Hosts',
+        1392123,
+        attributes_list=['Description', 'Location', 'host'],
+        )
+    )

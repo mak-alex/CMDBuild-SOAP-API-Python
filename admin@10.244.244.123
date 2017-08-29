@@ -1,0 +1,98 @@
+import re
+import requests
+
+from lxml import etree
+from lxml.etree import Element, SubElement, QName, tostring, fromstring
+
+ns0_NAMESPACE = 'http://soap.services.cmdbuild.org'
+ns0 = "{%s}" % ns0_NAMESPACE
+ns1_NAMESPACE = 'http://schemas.xmlsoap.org/soap/envelope/'
+ns1 = "{%s}" % ns1_NAMESPACE
+SOAPENV = "{%s}" % ns1_NAMESPACE
+xsi_NAMESPACE = 'http://www.w3.org/2001/XMLSchema-instance'
+xsi = "{%s}" % xsi_NAMESPACE
+oasisopen = 'http://docs.oasis-open.org/wss/2004/01/'
+wsse_NAMESPACE = oasisopen + "oasis-200401-wss-wssecurity-secext-1.0.xsd"
+wsse = "{%s}" % wsse_NAMESPACE
+wssu_NAMESPACE = oasisopen + "oasis-200401-wss-wssecurity-utility-1.0.xsd"
+wssu = "{%s}" % wssu_NAMESPACE
+PassText = oasisopen + "oasis-200401-wss-username-token-profile-1.0#PasswordText"
+NSMAP = {'ns0':ns0_NAMESPACE,'ns1':ns1_NAMESPACE,'xsi':xsi_NAMESPACE, 'wsse': wsse_NAMESPACE, 'wssu': wssu_NAMESPACE, 'SOAP-ENV' : ns1_NAMESPACE}
+
+
+class CMDBuild:
+    def __init__(self, username=None, password=None, url=None):
+        self.url = url
+        self.envelope = etree.Element(SOAPENV + "Envelope", nsmap=NSMAP)
+        header = SubElement(self.envelope, SOAPENV + 'Header', nsmap=NSMAP)
+
+        Security  = SubElement(header, wsse + 'Security', nsmap=NSMAP)
+        Security.attrib['mustUnderstand'] = "1"
+
+        UsernameToken = SubElement(Security, wsse + 'UsernameToken', nsmap=NSMAP)
+        Username = SubElement(UsernameToken, wsse + 'Username', nsmap=NSMAP)
+        Username.text = username
+
+        Password = SubElement(UsernameToken, wsse + 'Password', nsmap=NSMAP)
+        Password.attrib['Type'] = PassText
+        Password.text = password
+
+    def getCardList(self, classname, attributes=None, _filter=None, filter_sq_operator=None):
+        Body = SubElement(self.envelope, ns1 + 'Body', nsmap=NSMAP)
+        getCardList = SubElement(Body, ns0 + 'getCardList', nsmap=NSMAP)
+        SubElement(getCardList, ns0 + 'className', nsmap=NSMAP).text = classname
+        if attributes:
+            if isinstance(attributes, list):
+                for attr in attributes:
+                    attribute = SubElement(getCardList, ns0 + 'attribute')
+                    SubElement(attribute, ns0 + 'name', nsmap=NSMAP).text = attr
+
+        if _filter:
+            queryType = SubElement(getCardList, ns0 + 'queryType', nsmap=NSMAP)
+            __filter__ = SubElement(queryType, ns0 + 'filter', nsmap=NSMAP)
+            SubElement(__filter__, ns0 + 'name', nsmap=NSMAP).text = _filter['name']
+            SubElement(__filter__, ns0 + 'operator', nsmap=NSMAP).text = _filter['operator']
+            SubElement(__filter__, ns0 + 'value', nsmap=NSMAP).text = str(_filter['value'])
+
+            if filter_sq_operator:
+                filterOperator = SubElement(queryType, ns0 + 'filterOperator', nsmap=NSMAP)
+                for d in filter_sq_operator:
+                    for r in d:
+                        if isinstance(r, str):
+                            SubElement(filterOperator, ns0 + 'operator', nsmap=NSMAP).text = r
+                        else:
+                            subquery = SubElement(filterOperator, ns0 + 'subquery', nsmap=NSMAP)
+                            sq_filter = SubElement(subquery, ns0 + 'filter', nsmap=NSMAP)
+                            SubElement(sq_filter, ns0 + 'name', nsmap=NSMAP).text = r['name']
+                            SubElement(sq_filter, ns0 + 'operator', nsmap=NSMAP).text = r['operator']
+                            SubElement(sq_filter, ns0 + 'value', nsmap=NSMAP).text = str(r['value'])
+                print(tostring(self.envelope, pretty_print=True))
+        self.__request__()
+
+    def __request__(self,):
+        encoded_request = tostring(self.envelope)
+        headers = {
+            "Content-Type": "text/xml; charset=UTF-8",
+            "Content-Length": str(len(encoded_request)),
+            "SOAPAction": ""
+        }
+        response = requests.post(
+            url=self.url,
+            headers = headers,
+            data = encoded_request,
+        )
+        print(response.text)
+
+t = CMDBuild(
+    username='admin',
+    password='3$rFvCdE', 
+    url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl'
+)
+t.getCardList(
+    'zItems', 
+    _filter={'name':'Id','operator':'EQUALS','value':1392167}, 
+    filter_sq_operator=[
+        ['AND'],
+        [{'name':'Id','operator':'EQUALS','value':1392177},{'name':'Id','operator':'EQUALS','value':1392177}]
+    ]
+)
