@@ -298,18 +298,19 @@ class CMDBuild:
         cardType.className = classname
         attributes = []
         if attributes_list:
-            attribute = self.client.factory.create('ns0:attributeList')
             if isinstance(attributes_list, list):
-                for attribute in attributes_list:
-                    for k, _v in attribute.items():
+                for _attribute in attributes_list:
+                    for k, _v in _attribute.items():
+                        attribute = self.client.factory.create('ns0:attributeList')
                         attribute.name = k
                         attribute.value = _v
-                    attributes.append(attribute)
+                        attributes.append(attribute)
             else:
                 for k, _v in attributes_list.items():
+                    attribute = self.client.factory.create('ns0:attributeList')
                     attribute.name = k
                     attribute.value = _v
-                attributes.append(attribute)
+                    attributes.append(attribute)
             cardType.attributeList = attributes
 
         if metadata:
@@ -792,8 +793,5 @@ class CMDBuild:
 if __name__ == '__main__':
     t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', use_digest=True, debug=False)
 
-    card = t.get_card('Hosts', 1392123, attributes_list=['host'])
+    card = t.create_card('AddressesIPv4', [{'Address':'192.192.192.192/24'},{'Description': 'Test'}])
     print(card)
-    attributeList = card['attributeList']
-    for attr in attributeList:
-        print('Response: {} - {}'.format(attr[0], attr[1]))
