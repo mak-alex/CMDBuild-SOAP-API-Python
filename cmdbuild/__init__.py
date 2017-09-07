@@ -257,9 +257,6 @@ class CMDBuild:
         if order_type:
             query.orderType = order_type
 
-        if limit:
-            query.limit = limit
-
         if offset:
             query.offset = offset
 
@@ -272,7 +269,7 @@ class CMDBuild:
         try:
             result = self.client.service.getCardList(
                 className=classname, attributeList=attributes,
-                queryType=query)
+                queryType=query, limit=limit)
             if not result[0]:
                 print('Failed to get cards for classname: {0},'
                       'total rows: {1}'.format(classname, result[0]))
@@ -791,7 +788,7 @@ class CMDBuild:
         return result
 
 if __name__ == '__main__':
-    t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', use_digest=True, debug=False)
+    t = CMDBuild(username='admin',password='3$rFvCdE',url='http://10.244.244.128/cmdbuild/services/soap/Webservices?wsdl', use_digest=True, debug=True)
 
-    card = t.create_card('AddressesIPv4', [{'Address':'192.192.192.192/24'},{'Description': 'Test'}])
+    card = t.get_card_list(classname='AddressesIPv4', limit=1)
     print(card)
