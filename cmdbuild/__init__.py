@@ -15,15 +15,6 @@ except:
     from sha import new as sha1
     from md5 import md5
 
-# todo: ебаный digest
-# todo: причесать код (очень важно блядь)
-# todo: добавить работу по токену (пока хз как)
-# todo: на не спящую голову, найти схожие участки кода и
-# оформить структурами/объектами, а вообще, по хорошему,
-# весь этот шлак создаваемый lxml-ом оформить бы объектами
-# todo: бля, надо с QName
-# todo: разобраться с namespace'ами, как то напряжно для глаз
-
 ns0_NAMESPACE = 'http://soap.services.cmdbuild.org'
 ns0 = "{%s}" % ns0_NAMESPACE
 ns1_NAMESPACE = 'http://schemas.xmlsoap.org/soap/envelope/'
@@ -97,9 +88,10 @@ class CMDBuild:
         self.Envelope = None
         self.Body = None
         self.use_digest = use_digest
-        self.nonce = nonce
-        self.setnonce()
-        self.created = created
+        if use_digest:
+            self.nonce = nonce
+            self.setnonce()
+            self.created = created
         self.response = None
 
     def pretty_print(self, resp=None):
@@ -126,7 +118,7 @@ class CMDBuild:
             s.append(self.password)
             s.append(datetime.datetime.now().isoformat())
             m = md5()
-            m.update(':'.join(s))
+            m.update(':'.join(s.encode('utf-8')))
             self.raw_nonce = m.digest()
             self.nonce = b64encode(self.raw_nonce)
         else:
@@ -191,14 +183,24 @@ class CMDBuild:
         SubElement(cardType, ns0 + 'className', nsmap=NSMAP).text = classname
 
         if attributes:
-            attributeList = SubElement(cardType, ns0 + 'attributeList', nsmap=NSMAP)
-            for k, v in attributes.items():
-                SubElement(attributeList, ns0 + 'name', nsmap=NSMAP).text = str(k)
-                SubElement(attributeList, ns0 + 'value', nsmap=NSMAP).text = str(v)
+            if isinstance(attributes, dict):
+                for k, v in attributes.items():
+                    attributeList = SubElement(cardType, ns0 + 'attributeList', nsmap=NSMAP)
+                    SubElement(attributeList, ns0 + 'name', nsmap=NSMAP).text = str(k)
+                    SubElement(attributeList, ns0 + 'value', nsmap=NSMAP).text = str(v)
+            elif isinstance(attributes, list):
+                for attr in attributes:
+                    for k, v in attr.items():
+                        attributeList = SubElement(cardType, ns0 + 'attributeList', nsmap=NSMAP)
+                        SubElement(attributeList, ns0 + 'name', nsmap=NSMAP).text = str(k)
+                        SubElement(attributeList, ns0 + 'value', nsmap=NSMAP).text = str(v)
+            else:
+                print('unknown type attributes: {}'.format(type(attributes)))
+                sys.exit(1)
 
         if metadata:
-            metadata = SubElement(cardType, ns0 + 'metadata', nsmap=NSMAP)
             for k, v in metadata.items():
+                metadata = SubElement(cardType, ns0 + 'metadata', nsmap=NSMAP)
                 SubElement(metadata, ns0 + str(k), nsmap=NSMAP).text = str(v)
 
         self.response = self.__request__()
@@ -672,77 +674,4 @@ if __name__ == '__main__':
         use_digest = False,
         verbose = False
     )
-    _f = {
-        'name':'Address',
-        'operator':'EQUALS',
-        'value':'192.192.192.192/24'
-    }
-    class Test_CMDBuild_SOAP_API_Methods(unittest.TestCase):
-        def test_1_createCard(self,):
-            t.createCard('AddressesIPv4', attributes={'Address':'192.192.192.192/24'})
-
-        def test_2_updateCard(self,):
-            t.getCardList('AddressesIPv4', _filter=_f)
-            t.updateCard('AddressesIPv4', [id for id in t.response['Id']][0], {'Address':'192.192.192.192/24'})
-
-        def test_3_getCard(self,):
-            t.getCardList('AddressesIPv4', _filter=_f)
-            t.getCard('AddressesIPv4', [id for id in t.response['Id']][0], attributes = ['Address'])
-
-        def test_4_deleteCard(self,):
-            t.getCardList('AddressesIPv4', _filter=_f)
-            t.deleteCard('AddressesIPv4', [id for id in t.response['Id']][0])
-
-        def test_getCardList(self,):
-            t.getCardList(
-                'AddressesIPv4',
-                attributes = ['Address'],
-                _filter = {
-                    'name':'Address',
-                    'operator':'EQUALS',
-                    'value':'192.192.192.192/24'
-                },
-            )
-            '''
-                filter_sq_operator=['or', [
-                    {'name':'Id','operator':'EQUALS','value':1391920},{'name':'Id','operator':'EQUALS','value':1391950}
-                ]],
-                limit = 100,
-                cql_query=True,
-                cql_query_params={'key': 'd', 'value': 'd'}
-            )
-            '''
-
-        def test_getRelationList(self,):
-            t.getRelationList(classname='Hosts')
-
-        def test_getRelationListExt(self,):
-            t.getRelationListExt(classname='Hosts')
-
-        def test_getLookupList(self,):
-            t.getLookupList('LOC_TYPE')
-
-        def test_getLookupListByCode(self,):
-            t.getLookupListByCode(code='NOC')
-
-        def test_getLookupById(self,):
-            t.getLookupById(2025)
-
-        def test_getAttributeList(self,):
-            t.getAttributeList('Hosts')
-
-        def test_getAttachmentList(self,):
-            t.getAttachmentList('Hosts')
-
-        def test_getActivityMenuSchema(self,):
-            t.getActivityMenuSchema()
-
-        def test_getMenuSchema(self,):
-            t.getMenuSchema()
-
-        def test_getCardMenuSchema(self,):
-            t.getCardMenuSchema()
-    #unittest.main(verbosity=2)
-    t.getCardList('templates', attributes=['Description', 'host', 'status'])
-    t.pretty_print()
-
+    t.createCard('Hosts', [{'name':'daas', 'value':'vdacvdas'}])
